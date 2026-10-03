@@ -22,10 +22,11 @@ Run both before every commit.
 
 Applies to the README, comments, commit messages, issues and release notes.
 
-- Plain English and short sentences. Say what something does, not how good it is.
+- Plain English in normal, natural sentences. Keep it short and on point. Say what something does, not how good it is.
 - No emojis, no exclamation marks, no em dashes, no marketing words.
 - Headings in sentence case.
 - Do not add sections, badges or files that nobody asked for.
+- No Co-Authored-By or other AI trailers in commits. The note on AI in the README covers that.
 
 ## Home Assistant internals
 
