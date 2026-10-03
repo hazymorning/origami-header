@@ -1,7 +1,7 @@
 // Origami Header: replaces the Home Assistant dashboard header with a drawer.
 // Configuration and usage: README.md
 
-const VERSION = "1.0.0";
+const VERSION = "0.1.0";
 const ROOT = "hui-root";
 const TAG = "origami-header";
 const CARD = "origami-header-card";
