@@ -26,7 +26,8 @@ Applies to the README, comments, commit messages, issues and release notes.
 - No emojis, no exclamation marks, no em dashes, no marketing words.
 - Headings in sentence case.
 - Do not add sections, badges or files that nobody asked for.
-- No Co-Authored-By or other AI trailers in commits. The note on AI in the README covers that.
+- Keep the README short. Everything beyond installation and the basics goes into `<details>` blocks.
+- Commit with the repository owner's git identity, never as Claude, and without Co-Authored-By or other AI trailers. The note on AI in the README covers that.
 
 ## Home Assistant internals
 
