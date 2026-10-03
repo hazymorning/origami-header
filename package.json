@@ -1,0 +1,16 @@
+{
+  "name": "origami-header",
+  "version": "1.0.0",
+  "description": "Replaces the Home Assistant dashboard header with a drawer",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "check": "node scripts/check-style.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@webcomponents/scoped-custom-element-registry": "^0.0.10"
+  }
+}
