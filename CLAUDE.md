@@ -41,6 +41,6 @@ The module depends on these. When an update breaks something, check them first:
 
 ## Releases
 
-1. Update `VERSION` in `origami-header.js` and `version` in `package.json`.
+1. Update `VERSION` in `origami-header.js`, `version` in `package.json` and the version in the README's manual install URL.
 2. Commit, tag `vX.Y.Z` and push.
-3. Create a GitHub release for the tag with a few lines on what changed.
+3. Create a GitHub release for the tag, attach `origami-header.js` and write a few lines on what changed.

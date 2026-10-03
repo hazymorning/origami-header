@@ -16,7 +16,7 @@ frontend:
 
 It has to be an extra module, because a dashboard resource loads too late to prevent the flash. HACS may add a resource on its own as well. You can leave it there, the module only starts once.
 
-Without HACS, download `origami-header.js` from the latest release into `config/www` and use `/local/origami-header.js?v=1.0.0` as the URL. Change the version number after every update, or browsers will keep using the old file.
+Without HACS, download `origami-header.js` from the latest release into `config/www` and use `/local/origami-header.js?v=0.1.0` as the URL. Change the version number after every update, or browsers will keep using the old file.
 
 ## Usage
 
