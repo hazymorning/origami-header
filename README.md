@@ -1,12 +1,10 @@
 # Origami Header
 
-Origami Header replaces the header of your Home Assistant dashboards. You can build your own header out of cards, hide the header and keep its buttons in a drawer that slides down, or do both.
-
-If you have ever hidden the header, you know the two catches. It still flashes up every time a dashboard loads, and once it's gone there is no quick way into edit mode or the sidebar. Origami Header takes the header's place before the dashboard is drawn, so nothing flashes, and the drawer keeps edit mode and the sidebar one tap away.
+Origami Header replaces the Home Assistant dashboard header with your own cards, a pull-down drawer, or both. Unlike hiding the header with kiosk-mode or a theme, nothing flashes while the dashboard loads, and edit mode and the sidebar stay within reach.
 
 ## Installation
 
-Add this repository to HACS as a custom repository of type Dashboard and download Origami Header. Then load it as an extra module in `configuration.yaml` and restart Home Assistant:
+Add this repository to HACS as a custom repository of type Dashboard and download it. Then add it to `configuration.yaml` as an extra module, not as a dashboard resource, and restart Home Assistant:
 
 ```yaml
 frontend:
@@ -14,23 +12,29 @@ frontend:
     - /hacsfiles/origami-header/origami-header.js
 ```
 
-It has to be an extra module, because a dashboard resource loads too late to prevent the flash. HACS may add a resource on its own as well. You can leave it there, the module only starts once.
+<details>
+<summary>Manual installation</summary>
 
-Without HACS, download `origami-header.js` from the latest release into `config/www` and use `/local/origami-header.js?v=0.1.0` as the URL. Change the version number after every update, or browsers will keep using the old file.
+Download `origami-header.js` from the latest release into `config/www` and use `/local/origami-header.js?v=0.1.0` as the extra module URL. Change the version after each update so browsers load the new file.
+
+</details>
 
 ## Usage
 
-Edit a dashboard and add the Origami Header card to any view. You set everything up in the card editor, which shows a preview. On the dashboard the card itself is invisible, and in edit mode you get the normal header back so the dashboard tools still work.
+Edit a dashboard, add the Origami Header card to any view and choose a mode. The card is invisible on the dashboard and shows a preview while you edit. In edit mode the default header comes back.
 
-There are three modes:
+| Mode | Header | Drawer |
+| --- | --- | --- |
+| `drawer` (default) | Hidden | Handle at the top of the screen |
+| `header` | Your header cards | Handle below the header |
+| `hidden` | Hidden | None |
 
-- `drawer` is the default. It hides the header, and a small handle at the top of the screen opens the drawer.
-- `header` shows your own header cards, with the handle just below them.
-- `hidden` hides the header and nothing else.
+<details>
+<summary>Opening the drawer</summary>
 
-Tap the handle or pull it down to open the drawer. To close it, tap outside, press Escape or push the grip back.
+Tap the handle or pull it down. To close the drawer, tap outside, press Escape or push the grip back.
 
-You can also open the drawer from your own button, for example in a navigation bar or in your header. Use this action, or `open` and `close` instead of `toggle`:
+To open it from your own button, use this action. `open` and `close` work as well.
 
 ```yaml
 tap_action:
@@ -38,7 +42,12 @@ tap_action:
   origami_header: toggle
 ```
 
-This gives you a header with a title and a temperature badge, and the default shortcuts in the drawer:
+</details>
+
+<details>
+<summary>Header example</summary>
+
+A title with a temperature badge, and the default shortcuts in the drawer. Add `items: []` to leave out the drawer.
 
 ```yaml
 type: custom:origami-header-card
@@ -52,25 +61,33 @@ header:
         entity: sensor.outdoor_temperature
 ```
 
-Add `items: []` for a header without a drawer. The [examples](examples) folder has two complete setups, which use [paper-buttons-row](https://github.com/jcwillox/lovelace-paper-buttons-row) and the System Monitor integration.
+The [examples](examples) folder has two complete setups. They use [paper-buttons-row](https://github.com/jcwillox/lovelace-paper-buttons-row) and the System Monitor integration.
 
-## Options
+</details>
 
-Everything here is also in the visual editor.
+<details>
+<summary>Options</summary>
+
+All options are also available in the card editor.
 
 | Option | Default | Description |
 | --- | --- | --- |
 | `mode` | `drawer` | `drawer`, `header` or `hidden` |
-| `header` | | Cards for the header in header mode. Without them you get the dashboard title. |
+| `header` | | Cards for the header. Without them the dashboard title is shown. |
 | `cards` | | Cards at the top of the drawer |
-| `items` | eight shortcuts | Shortcuts in the drawer. With no items and no cards there is no drawer. |
-| `position` | `top` | Whether the drawer comes from the `top` or the `bottom` |
-| `layout` | `list` | How the shortcuts are laid out: `list`, `grid` or `icons` |
-| `all_users` | `false` | Let everyone open the drawer. Otherwise only admins can, and in drawer mode other users see no header at all. |
-| `hide_handle` | `false` | Hide the handle and use your own button instead |
-| `css` | | Your own styles, see below |
+| `items` | eight shortcuts | Shortcuts in the drawer |
+| `position` | `top` | `top` or `bottom` |
+| `layout` | `list` | `list`, `grid` or `icons` |
+| `all_users` | `false` | Let non-admin users open the drawer. In drawer mode they otherwise see no header. |
+| `hide_handle` | `false` | Hide the handle when you open the drawer from a button |
+| `css` | | Custom styles |
 
-Each shortcut has a `label`, an `icon` and an action. Use `tap_action` for any normal Home Assistant action, or `special` for the two things a card action can't do: `edit` turns on edit mode and `sidebar` opens the sidebar.
+</details>
+
+<details>
+<summary>Shortcuts</summary>
+
+Each shortcut has a `label`, an `icon` and a `tap_action`. Use `special: edit` or `special: sidebar` instead of an action to turn on edit mode or open the sidebar.
 
 ```yaml
 items:
@@ -84,19 +101,21 @@ items:
       navigation_path: /config/automation/dashboard
 ```
 
-## Styling
+</details>
 
-The `css` option is applied inside the card, so you can style its parts directly:
+<details>
+<summary>Styling</summary>
+
+The `css` option is applied inside the card, so you can target its parts directly.
 
 | Class | Part |
 | --- | --- |
-| `.bar`, `.bar-cards`, `.title` | The header, its cards, and the title shown when there are no cards |
-| `.handle` | The handle that opens the drawer |
-| `.scrim` | The backdrop behind the drawer |
-| `.sheet` | The drawer |
-| `.cards`, `.grid` | The drawer cards and the shortcuts |
-| `.tile`, `.tile ha-icon`, `.label` | A shortcut, its icon and its label |
-| `.grip` | The grip at the edge of the drawer |
+| `.bar`, `.bar-cards`, `.title` | Header, header cards, dashboard title |
+| `.handle`, `.grip` | Handle that opens the drawer, grip that closes it |
+| `.scrim` | Backdrop behind the drawer |
+| `.sheet` | Drawer |
+| `.cards`, `.grid` | Drawer cards, shortcuts |
+| `.tile`, `.tile ha-icon`, `.label` | Shortcut, its icon, its label |
 
 ```yaml
 css: |
@@ -104,16 +123,15 @@ css: |
   .scrim { backdrop-filter: blur(12px); }
 ```
 
-## How it works
+</details>
 
-Home Assistant renders the dashboard header into a slot inside `hui-root`. Origami Header hooks into `hui-root` and fills that slot with its own element during each render, before the browser paints. Other approaches hide the header after it has already been drawn, and that is where the flash comes from.
+<details>
+<summary>How it works</summary>
 
-This relies on Home Assistant internals. If an update ever breaks it, the module logs a warning and leaves the normal header in place.
+Home Assistant renders the header into a slot inside `hui-root`. Origami Header fills that slot with its own element during the same render, before the browser paints, so the default header is never drawn. If a Home Assistant update changes this, the module logs a warning and leaves the default header alone.
 
-## A note on AI
+</details>
 
-I built this together with AI, and I'd rather be upfront about that.
+## Made with AI
 
-For literally years I looked for a way to get rid of the header flash. I ran kiosk-mode just for this and tried card-mod and theme tweaks along the way, and the flash was always still there. Working on it with AI is how I finally found an approach that actually solves it. I don't think I would ever have found it on my own.
-
-Also, as you may have noticed, I care a bit too much about code quality. Realistically, I would never have had the time to get it to this point by myself.
+After years of kiosk-mode and theme workarounds, AI helped me find a real fix for the header flash and polish the code further than I would have had time for.

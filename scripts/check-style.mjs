@@ -17,7 +17,7 @@ const phrases = [
 ];
 const phrase = new RegExp(`\\b(${phrases.map((p) => p.replace(/[-']/g, "\\$&")).join("|")})\\b`, "i");
 const small = new Set(["a", "an", "and", "as", "at", "but", "by", "for", "in", "of", "on", "or", "the", "to", "with"]);
-const names = /Home Assistant|Origami Header|GitHub|HACS|YAML|CSS/g;
+const names = /Home Assistant|Origami Header|GitHub|HACS|YAML|CSS|AI/g;
 
 const files = (dir) =>
   readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
