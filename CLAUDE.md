@@ -37,7 +37,7 @@ The module depends on these. When an update breaks something, check them first:
 - `hui-card`: removes cards whose element is `hidden`, sets `preview` in edit mode and in the card editor
 - the scoped custom element registry polyfill in the Home Assistant app bundle
 - `action-handler`: `bind()` and the `action` event with tap, hold and double tap, as used by tiles and badges
-- the events `hass-action`, `hass-toggle-menu`, `ll-custom` and `location-changed`
+- the events `hass-action`, `hass-toggle-menu`, `ll-custom` and `location-changed`. `home-assistant` runs `hass-action`, so a `fire-dom-event` from those cards starts outside `hui-root`.
 
 `test/mock/mock-ha.js` reproduces this behavior. Update it together with the module, and check the result on a real Home Assistant instance before a release.
 

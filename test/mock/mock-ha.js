@@ -2,7 +2,18 @@
 // They follow the behavior of hui-root.ts and hui-card.ts in the frontend repository.
 
 const events = (window.events = []);
-for (const type of ["hass-action", "hass-toggle-menu"]) addEventListener(type, (ev) => events.push({ type, detail: ev.detail }));
+for (const type of ["hass-action", "hass-toggle-menu"]) {
+  addEventListener(type, (ev) => events.push({ type, detail: ev.detail, target: ev.composedPath()[0].localName }));
+}
+
+// Like home-assistant, which runs hass-action and sends fire-dom-event from itself, outside the dashboard.
+addEventListener("hass-action", (ev) => {
+  const action = ev.detail.config[`${ev.detail.action}_action`];
+  if (action?.action !== "fire-dom-event") return;
+  const custom = new Event("ll-custom", { bubbles: true, composed: true });
+  custom.detail = action;
+  document.body.dispatchEvent(custom);
+});
 
 // Like hui-root, the header gets its height from the toolbar and may carry a backdrop-filter from the theme.
 const ROOT_STYLE = `

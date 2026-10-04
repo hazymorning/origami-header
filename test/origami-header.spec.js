@@ -377,6 +377,24 @@ test("any card can open, close and toggle the menu, edit the dashboard and toggl
   expect((await page.evaluate(() => window.events)).map((e) => e.type)).toEqual(["hass-toggle-menu", "enable-edit-mode"]);
 });
 
+test("cards that hand their actions to Home Assistant can also open the menu, edit the dashboard and toggle the sidebar", async ({ page }) => {
+  await start(page);
+  const send = (cmd) =>
+    page.evaluate((cmd) => {
+      const config = { tap_action: { action: "fire-dom-event", origami_header: cmd } };
+      const card = window.root.shadowRoot.querySelector("#view");
+      card.dispatchEvent(new CustomEvent("hass-action", { detail: { config, action: "tap" }, bubbles: true, composed: true }));
+    }, cmd);
+  await send("open");
+  expect((await drawer(page)).open).toBe(true);
+  await send("close");
+  expect((await drawer(page)).open).toBe(false);
+  await send("sidebar");
+  await send("edit");
+  const events = (await page.evaluate(() => window.events)).filter((e) => e.type !== "hass-action");
+  expect(events.map((e) => [e.type, e.target])).toEqual([["hass-toggle-menu", "hui-root"], ["enable-edit-mode", undefined]]);
+});
+
 test("card is invisible on the dashboard and previews the header or menu in edit mode", async ({ page }) => {
   await start(page);
   const mount = (config) =>

@@ -17,7 +17,7 @@ frontend:
 <details>
 <summary>Manual installation</summary>
 
-Download `origami-header.js` from the [latest release](https://github.com/hazymorning/origami_header/releases/latest) into `config/www` and use `/local/origami-header.js?v=0.3.0` as the extra module URL. Change the version after each update so browsers load the new file.
+Download `origami-header.js` from the [latest release](https://github.com/hazymorning/origami_header/releases/latest) into `config/www` and use `/local/origami-header.js?v=0.3.1` as the extra module URL. Change the version after each update so browsers load the new file.
 
 </details>
 
