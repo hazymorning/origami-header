@@ -79,7 +79,7 @@ All options are also available in the card editor.
 | --- | --- | --- |
 | `mode` | `menu` | `menu`, `header` or `hidden` |
 | `buttons` | Edit, Automations, Tools, Menu | Your buttons |
-| `cards` | | Cards above the buttons |
+| `cards` | | A card or a list of cards, shown above the buttons |
 | `position` | `top` | Where the menu opens, `top` or `bottom` |
 | `layout` | `list` | `list`, `grid` or `icons`. In the header the buttons always stay in one row. |
 | `all_users` | `false` | Show it to all users, not only admins |
