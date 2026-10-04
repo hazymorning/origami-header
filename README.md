@@ -17,7 +17,7 @@ frontend:
 <details>
 <summary>Manual installation</summary>
 
-Download `origami-header.js` from the [latest release](https://github.com/hazymorning/origami_header/releases/latest) into `config/www` and use `/local/origami-header.js?v=0.4.2` as the extra module URL. Change the version after each update so browsers load the new file.
+Download `origami-header.js` from the [latest release](https://github.com/hazymorning/origami_header/releases/latest) into `config/www` and use `/local/origami-header.js?v=0.4.3` as the extra module URL. Change the version after each update so browsers load the new file.
 
 </details>
 
@@ -99,7 +99,7 @@ To close the menu, tap outside, press Escape or swipe it back toward its edge. T
 <details>
 <summary>Styling</summary>
 
-Buttons use the theme variables of tiles and badges, such as `--ha-card-background` and `--ha-badge-size`. The menu uses `--ha-box-shadow-l` for its shadow and `--ha-dialog-scrim-backdrop-filter` for its backdrop. The `css` option applies inside the card:
+Buttons use the theme variables of tiles and badges, such as `--ha-card-background` and `--ha-badge-size`. The menu uses `--ha-box-shadow-m` for its shadow and `--ha-dialog-scrim-backdrop-filter` for its backdrop. The `css` option applies inside the card:
 
 | Class | Part |
 | --- | --- |
