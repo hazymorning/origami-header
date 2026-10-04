@@ -120,8 +120,20 @@ class HuiCard extends HTMLElement {
   }
 }
 
+// Like the action handler of the cards, it keeps the options on the element and reports a click as a tap.
+// Hold and double tap depend on timing, so tests send those action events themselves.
+class ActionHandler extends HTMLElement {
+  bind(element, options = {}) {
+    element.actionHandler = { options };
+    element.addEventListener("click", () => {
+      element.dispatchEvent(new CustomEvent("action", { detail: { action: "tap" }, bubbles: true, composed: true }));
+    });
+  }
+}
+
 customElements.define("hui-root", HuiRoot);
 customElements.define("hui-card", HuiCard);
+if (!window.noActionHandler) customElements.define("action-handler", ActionHandler);
 customElements.define("ha-ripple", class extends HTMLElement {});
 customElements.define("ha-icon", class extends HTMLElement {
   set icon(value) {

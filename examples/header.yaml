@@ -1,141 +1,40 @@
 type: custom:origami-header-card
 mode: header
 cards:
-  - type: custom:paper-buttons-row
-    extra_styles: >-
-      div.flex-box { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "title settings power" "stats settings power"; column-gap: 8px; row-gap: 14px; align-items: center }
-      paper-button { transition: transform 0.1s ease }
-      paper-button:active { transform: scale(0.96) }
-    base_config:
-      tap_action:
-        action: none
-      styles:
-        name:
-          padding: 0px
-          white-space: nowrap
-        state:
-          padding: 0px
-          white-space: nowrap
-    buttons:
-      - layout: name|state
-        name: Home Assistant
-        state: "{{ state_attr('update.home_assistant_core_update', 'installed_version') or '' }}"
-        styles:
-          button:
-            grid-area: title
-            padding: 0px
-            justify-content: flex-start
-            align-items: baseline
-            pointer-events: none
-          name:
-            font-size: 18px
-            line-height: 22px
-            font-weight: 700
-            letter-spacing: -0.2px
-            color: var(--primary-text-color)
-          state:
-            margin-left: 7px
-            font-size: 14px
-            line-height: 22px
-            font-weight: 500
-            color: var(--secondary-text-color)
-      - layout: name
-        tooltip: Hardware
-        name: >-
-          {%- set c = states('sensor.system_monitor_processor_use') | float(none) -%}
-          {%- set r = states('sensor.system_monitor_memory_usage') | float(none) -%}
-          {%- set d = states('sensor.system_monitor_disk_usage') | float(none) -%}
-          CPU {{ (c | round(0) | int ~ '%') if c is not none else '–' }} · RAM {{ (r | round(0) | int ~ '%') if r is not none else '–' }} · Disk {{ (d | round(0) | int ~ '%') if d is not none else '–' }}
+  - type: heading
+    heading: Home Assistant
+    badges:
+      - type: entity
+        entity: sensor.system_monitor_processor_use
+        icon: mdi:gauge
         tap_action:
           action: navigate
           navigation_path: /config/hardware
-        styles:
-          button:
-            --pill: >-
-              {%- set m = [states('sensor.system_monitor_processor_use') | float(0), states('sensor.system_monitor_memory_usage') | float(0), states('sensor.system_monitor_disk_usage') | float(0)] | max -%}
-              {{ 'var(--error-color)' if m >= 90 else 'var(--warning-color)' if m >= 75 else 'var(--primary-text-color)' }}
-            grid-area: stats
-            justify-self: start
-            box-sizing: border-box
-            max-width: 100%
-            height: 32px
-            padding: 0px 12px
-            border-radius: 16px
-            overflow: hidden
-            background-color: color-mix(in srgb, var(--pill) 10%, transparent)
-          name:
-            font-size: 12.5px
-            line-height: 16px
-            font-weight: 600
-            font-variant-numeric: tabular-nums
-            min-width: 0px
-            overflow: hidden
-            text-overflow: ellipsis
-            color: color-mix(in srgb, var(--pill) 60%, var(--primary-text-color))
-      - icon: mdi:cog-outline
-        layout: icon
-        tooltip: Settings
+      - type: entity
+        entity: sensor.system_monitor_memory_usage
+        icon: mdi:memory
         tap_action:
           action: navigate
-          navigation_path: /config/dashboard
-        styles:
-          button: &round
-            grid-area: settings
-            width: 44px
-            height: 44px
-            padding: 0px
-            justify-content: center
-            border-radius: 22px
-            background-color: color-mix(in srgb, var(--ha-card-background, var(--card-background-color)) 72%, transparent)
-            box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ha-card-background, var(--card-background-color)) 90%, transparent), 0 1px 3px rgba(0, 0, 0, 0.08)
-            color: var(--primary-text-color)
-          icon: &round-icon
-            --mdc-icon-size: 20px
-      - icon: mdi:power
-        layout: icon
-        tooltip: Restart
+          navigation_path: /config/hardware
+      - type: entity
+        entity: sensor.system_monitor_disk_usage
+        icon: mdi:harddisk
         tap_action:
-          action: call-service
-          service: homeassistant.restart
-          confirmation:
-            text: Restart Home Assistant?
-        styles:
-          button:
-            <<: *round
-            grid-area: power
-          icon: *round-icon
+          action: navigate
+          navigation_path: /config/storage
 buttons:
-  - label: Edit
-    icon: mdi:pencil-outline
+  - icon: mdi:pencil-outline
     special: edit
-  - label: Automations
-    icon: mdi:robot-outline
+  - icon: mdi:cog-outline
     tap_action:
       action: navigate
-      navigation_path: /config/automation/dashboard
-  - label: Tools
-    icon: mdi:wrench-outline
-    tap_action:
-      action: navigate
-      navigation_path: /config/tools
-  - label: Menu
-    icon: mdi:menu
+      navigation_path: /config/dashboard
+  - icon: mdi:power
+    color: red
+    hold_action:
+      action: perform-action
+      perform_action: homeassistant.restart
+      confirmation:
+        text: Restart Home Assistant?
+  - icon: mdi:menu
     special: sidebar
-css: |
-  .tile { flex-direction: column; gap: 8px; min-height: 0; padding: 0; border-radius: 18px; background: none; font-size: 12px; font-weight: 600; }
-  .tile ha-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 56px;
-    height: 56px;
-    border-radius: 18px;
-    --mdc-icon-size: 24px;
-    color: var(--primary-text-color);
-    background: color-mix(in srgb, var(--ha-card-background, var(--card-background-color)) 75%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ha-card-background, var(--card-background-color)) 90%, transparent), 0 1px 2px rgba(0, 0, 0, 0.05);
-  }
-  .tile:nth-child(1) ha-icon { color: var(--amber-color); }
-  .tile:nth-child(2) ha-icon { color: var(--blue-color); }
-  .tile:nth-child(3) ha-icon { color: var(--green-color); }
-  .label { display: block; overflow: visible; white-space: nowrap; line-height: 15px; color: var(--primary-text-color); }

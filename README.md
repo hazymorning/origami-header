@@ -15,41 +15,56 @@ frontend:
 <details>
 <summary>Manual installation</summary>
 
-Download `origami-header.js` from the latest release into `config/www` and use `/local/origami-header.js?v=0.2.0` as the extra module URL. Change the version after each update so browsers load the new file.
+Download `origami-header.js` from the latest release into `config/www` and use `/local/origami-header.js?v=0.3.0` as the extra module URL. Change the version after each update so browsers load the new file.
 
 </details>
 
 ## Usage
 
-Edit a dashboard, add the Origami Header card to any view and choose a mode. The card is invisible on the dashboard and shows a preview while you edit. In edit mode the default header comes back.
+Edit a dashboard, add the Origami Header card to any view and choose what happens to the header. The card is invisible on the dashboard and shows a preview while you edit. In edit mode the default header comes back.
 
-| Mode | What you see |
-| --- | --- |
-| `menu` (default) | The header is hidden. A handle at the top opens a menu with your buttons and cards. |
-| `header` | Your buttons and cards are the header. |
-| `hidden` | The header is hidden. |
+| Header | `mode` | What you see |
+| --- | --- | --- |
+| Fold-out menu | `menu` (default) | The header is hidden. A handle at the edge of the screen opens a menu with your buttons and cards. |
+| Custom header | `header` | Your cards and buttons form the header. |
+| No header | `hidden` | The header is hidden. |
 
 Only admins see it unless you turn on `all_users`. Other users get no header.
 
 <details>
-<summary>Buttons</summary>
+<summary>Buttons and cards</summary>
 
-Each button has a `label`, an `icon` and a `tap_action`. Use `special: edit` or `special: sidebar` instead of an action to turn on edit mode or open the sidebar.
+Buttons work like the button badges of a heading card. In the menu they look like tiles, in the header like badges. Leave out the icon to show only the name, or the name to show only the icon.
+
+| Option | Description |
+| --- | --- |
+| `name` | Text of the button |
+| `icon` | Icon of the button |
+| `color` | A theme color such as `amber` or `primary`, or any CSS color |
+| `special` | `edit` turns on edit mode, `sidebar` toggles the sidebar. Replaces `tap_action`. Only admins see the edit button. |
+| `tap_action`, `hold_action`, `double_tap_action` | Actions as on tiles and badges |
+
+Cards can be any cards. In the header they take the space before the buttons, and the buttons move to a second row when there is not enough room. A heading card gives you a title and entity badges, like the header of a sections view.
 
 ```yaml
 type: custom:origami-header-card
 mode: header
+cards:
+  - type: heading
+    heading: Home
+    badges:
+      - type: entity
+        entity: sensor.outside_temperature
 buttons:
-  - label: Edit
-    icon: mdi:pencil-outline
+  - icon: mdi:pencil-outline
     special: edit
-  - label: Automations
+  - name: Automations
     icon: mdi:robot-outline
+    color: blue
     tap_action:
       action: navigate
       navigation_path: /config/automation/dashboard
-  - label: Menu
-    icon: mdi:menu
+  - icon: mdi:menu
     special: sidebar
 ```
 
@@ -58,9 +73,9 @@ buttons:
 <details>
 <summary>Opening the menu</summary>
 
-Tap the handle or pull it down. To close the menu, tap outside, press Escape or push the grip back.
+Tap the handle or pull it. To close the menu, tap outside, press Escape or swipe it back toward its edge.
 
-To open it from your own button, use this action. `open` and `close` work as well.
+Any card can use a `fire-dom-event` action with `origami_header` set to `open`, `close`, `toggle`, `edit` or `sidebar`, for example to open the menu when the handle is hidden:
 
 ```yaml
 tap_action:
@@ -78,12 +93,12 @@ All options are also available in the card editor.
 | Option | Default | Description |
 | --- | --- | --- |
 | `mode` | `menu` | `menu`, `header` or `hidden` |
-| `buttons` | Edit, Automations, Tools, Menu | Your buttons |
-| `cards` | | A card or a list of cards, shown above the buttons |
+| `buttons` | Edit, Automations, Tools, Sidebar | Your buttons |
+| `cards` | | A card or a list of cards, shown before the buttons |
 | `position` | `top` | Where the menu opens, `top` or `bottom` |
-| `layout` | `list` | `list`, `grid` or `icons`. In the header the buttons always stay in one row. |
+| `layout` | `list` | Buttons in the menu, `list` for two columns or `grid` for four with the icon above the name |
+| `hide_handle` | `false` | Hide the handle when another card opens the menu |
 | `all_users` | `false` | Show it to all users, not only admins |
-| `hide_handle` | `false` | Hide the handle when you open the menu from your own button |
 | `css` | | Custom styles |
 
 </details>
@@ -91,16 +106,18 @@ All options are also available in the card editor.
 <details>
 <summary>Styling</summary>
 
+Buttons follow the theme variables of tiles and badges, such as `--ha-card-background`, `--ha-card-border-radius` and `--ha-badge-size`. The backdrop of the menu uses `--ha-dialog-scrim-backdrop-filter`, like dialogs.
+
 The `css` option is applied inside the card, so you can target its parts directly.
 
 | Class | Part |
 | --- | --- |
 | `.bar` | Header |
-| `.handle`, `.grip` | Handle that opens the menu, grip that closes it |
+| `.handle` | Handle that opens the menu |
 | `.scrim` | Backdrop behind the menu |
 | `.sheet` | Menu |
-| `.cards`, `.grid` | Cards, buttons |
-| `.tile`, `.tile ha-icon`, `.label` | Button, its icon, its label |
+| `.cards`, `.buttons` | Cards, buttons |
+| `.button`, `.button ha-icon`, `.name` | Button, its icon, its name |
 
 ```yaml
 css: |
@@ -108,7 +125,7 @@ css: |
   .scrim { backdrop-filter: blur(12px); }
 ```
 
-The [examples](examples) folder has a header and a menu with custom styles. They use [paper-buttons-row](https://github.com/jcwillox/lovelace-paper-buttons-row) and the System Monitor integration.
+The [examples](examples) folder has a header and a menu. They use the System Monitor integration.
 
 </details>
 
