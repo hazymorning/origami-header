@@ -287,12 +287,12 @@ test("the menu stays out of sight until a card opens it, and has the same paddin
   expect(sheet[1] + sheet[3] - (row[1] + row[3])).toBe(24);
 });
 
-test("the menu has the shadow of the Home Assistant bottom sheet, toward the middle of the screen", async ({ page }) => {
+test("the menu has the medium Home Assistant shadow, toward the middle of the screen", async ({ page }) => {
   const shadow = () => page.evaluate(() => getComputedStyle(window.root.querySelector("origami-header").shadowRoot.querySelector(".sheet")).boxShadow);
   await start(page);
-  expect(await shadow()).toBe("rgba(0, 0, 0, 0.12) 0px 6px 12px -3px, rgba(0, 0, 0, 0.2) 0px 16px 32px -6px");
+  expect(await shadow()).toBe("rgba(0, 0, 0, 0.1) 0px 3px 6px -1px, rgba(0, 0, 0, 0.15) 0px 8px 16px -2px");
   await start(page, { config: dashboard({ ...CARD, position: "bottom" }) });
-  expect(await shadow()).toBe("rgba(0, 0, 0, 0.2) 0px -8px 16px 0px");
+  expect(await shadow()).toBe("rgba(0, 0, 0, 0.1) 0px -3px 6px -1px, rgba(0, 0, 0, 0.15) 0px -8px 16px -2px");
 });
 
 test("the menu follows a swipe toward its edge and closes, a short swipe lets it spring back", async ({ page }) => {
