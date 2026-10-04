@@ -287,6 +287,14 @@ test("the menu stays out of sight until a card opens it, and has the same paddin
   expect(sheet[1] + sheet[3] - (row[1] + row[3])).toBe(24);
 });
 
+test("the menu has the shadow of the Home Assistant bottom sheet, toward the middle of the screen", async ({ page }) => {
+  const shadow = () => page.evaluate(() => getComputedStyle(window.root.querySelector("origami-header").shadowRoot.querySelector(".sheet")).boxShadow);
+  await start(page);
+  expect(await shadow()).toBe("rgba(0, 0, 0, 0.12) 0px 6px 12px -3px, rgba(0, 0, 0, 0.2) 0px 16px 32px -6px");
+  await start(page, { config: dashboard({ ...CARD, position: "bottom" }) });
+  expect(await shadow()).toBe("rgba(0, 0, 0, 0.2) 0px -8px 16px 0px");
+});
+
 test("the menu follows a swipe toward its edge and closes, a short swipe lets it spring back", async ({ page }) => {
   for (const [position, sign] of [["top", -1], ["bottom", 1]]) {
     await start(page, { config: dashboard({ ...CARD, position }) });
@@ -454,6 +462,7 @@ test("card is invisible on the dashboard and previews the header or menu in edit
         note: shown(".note"),
         inert: s.querySelector(".bar").inert && s.querySelector(".sheet").inert,
         position: getComputedStyle(s.querySelector(".sheet")).position,
+        shadow: getComputedStyle(s.querySelector(".sheet")).boxShadow,
         names: [...s.querySelectorAll(".name")].map((l) => l.textContent),
         cards: [...s.querySelectorAll("hui-card")].map((c) => c.textContent),
         size: el.getCardSize(),
@@ -468,7 +477,7 @@ test("card is invisible on the dashboard and previews the header or menu in edit
   await expect.poll(async () => (await card())?.hidden).toBe(true);
   expect(await card()).toMatchObject({ attached: false, size: 0 });
   await preview();
-  expect(await card()).toMatchObject({ hidden: false, attached: true, bar: false, sheet: true, position: "relative", names: ["One", "Two", "Three"], size: 4 });
+  expect(await card()).toMatchObject({ hidden: false, attached: true, bar: false, sheet: true, position: "relative", shadow: "none", names: ["One", "Two", "Three"], size: 4 });
   await expect.poll(async () => (await card()).cards).toEqual(["card:entities"]);
 
   await mount(HEADER);

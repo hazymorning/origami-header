@@ -1,7 +1,7 @@
 // Origami Header: replaces the Home Assistant dashboard header with your own buttons and cards.
 // Configuration and usage: README.md
 
-const VERSION = "0.4.1";
+const VERSION = "0.4.2";
 const ROOT = "hui-root";
 const TAG = "origami-header";
 const CARD = "origami-header-card";
@@ -125,7 +125,7 @@ const RADIUS = "var(--ha-bottom-sheet-border-radius, var(--ha-dialog-border-radi
 // Home Assistant sets this to 1ms when reduced motion is enabled.
 const TIME = "var(--ha-animation-duration-normal, 250ms)";
 
-// Buttons look like tiles in the menu and like badges in the header.
+// The menu has the shadow of the Home Assistant bottom sheet. Buttons look like badges in the header and like cards in the menu.
 const STYLE = sheet(`
 :host { position: relative; display: block; height: 0; pointer-events: none; font-family: var(--ha-font-family-body); -webkit-tap-highlight-color: transparent; }
 :host([mode="header"]) { height: auto; }
@@ -141,10 +141,10 @@ const STYLE = sheet(`
 .sheet { position: fixed; inset: 0 0 auto; display: flex; flex-direction: column; gap: var(--ha-space-4, 16px); box-sizing: border-box;
   width: min(100%, 560px); max-height: 85vh; margin-inline: auto; overflow: auto; overscroll-behavior: contain; will-change: transform;
   pointer-events: none; visibility: hidden; padding: calc(${PAD} + var(--safe-area-inset-top, 0px)) ${PAD} ${PAD}; border-radius: 0 0 ${RADIUS} ${RADIUS};
-  background: var(--app-header-background-color, var(--primary-background-color)); color: var(--primary-text-color); outline: none;
+  background: var(--app-header-background-color, var(--primary-background-color)); color: var(--primary-text-color); outline: none; box-shadow: var(--ha-box-shadow-l);
   transform: translateY(-100%); transition: transform ${TIME} cubic-bezier(0.2, 0, 0, 1), visibility 0s ${TIME}; }
 :host([bottom]) .sheet { inset: auto 0 0; padding: ${PAD} ${PAD} calc(${PAD} + var(--safe-area-inset-bottom, 0px));
-  border-radius: ${RADIUS} ${RADIUS} 0 0; background: var(--primary-background-color); transform: translateY(100%); }
+  border-radius: ${RADIUS} ${RADIUS} 0 0; background: var(--primary-background-color); box-shadow: 0 -8px 16px rgba(0, 0, 0, 0.2); transform: translateY(100%); }
 :host([open]) .scrim, :host([open]) .sheet { visibility: visible; transition-delay: 0s; }
 :host([open]) .scrim { opacity: 1; pointer-events: auto; }
 :host([open]) .sheet { transform: none; pointer-events: auto; }
@@ -183,7 +183,8 @@ const PREVIEW = sheet(`
 .bar { background: var(--app-header-background-color, var(--primary-background-color)); border-radius: var(--ha-card-border-radius, 12px); }
 :host([mode="hidden"]) .note { display: block; padding: var(--ha-space-3, 12px); color: var(--secondary-text-color); text-align: center; }
 .sheet { position: relative !important; inset: auto !important; transform: none !important; visibility: visible !important; transition: none !important;
-  width: auto !important; max-width: none !important; max-height: none !important; margin: 0 !important; overflow: visible !important; border-radius: ${RADIUS} !important; }
+  width: auto !important; max-width: none !important; max-height: none !important; margin: 0 !important; overflow: visible !important; border-radius: ${RADIUS} !important;
+  box-shadow: none !important; }
 `);
 
 class Panel extends HTMLElement {
