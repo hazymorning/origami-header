@@ -1,6 +1,6 @@
 {
   "name": "origami-header",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Replaces the Home Assistant dashboard header with a drawer",
   "license": "MIT",
   "private": true,

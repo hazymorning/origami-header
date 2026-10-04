@@ -15,7 +15,7 @@ frontend:
 <details>
 <summary>Manual installation</summary>
 
-Download `origami-header.js` from the latest release into `config/www` and use `/local/origami-header.js?v=0.1.0` as the extra module URL. Change the version after each update so browsers load the new file.
+Download `origami-header.js` from the latest release into `config/www` and use `/local/origami-header.js?v=0.1.1` as the extra module URL. Change the version after each update so browsers load the new file.
 
 </details>
 
