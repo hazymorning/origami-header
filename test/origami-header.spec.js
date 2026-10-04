@@ -134,6 +134,11 @@ test("header mode shows the buttons and cards as the header and starts the view 
     .toBe(true);
 });
 
+test("takes a single card as the card editor copies it, without a leading dash", async ({ page }) => {
+  await start(page, { config: dashboard({ ...HEADER, buttons: [], cards: { type: "entities" } }) });
+  await expect.poll(async () => (await drawer(page))?.barCards).toEqual(["card:entities"]);
+});
+
 test("header mode shows the buttons in one row and has no menu", async ({ page }) => {
   await start(page, { config: dashboard(HEADER) });
   const rows = await page.evaluate(() => {
@@ -293,7 +298,7 @@ test("offers a visual editor and a starter config", async ({ page }) => {
       fields: Object.keys(buttons.fields),
       label: form.computeLabel({ name: "buttons" }),
       helpers: names.filter((name) => form.computeHelper({ name })),
-      rejects: [rejects({ buttons: "x" }), rejects({ cards: {} }), rejects({ buttons: [], cards: [] })],
+      rejects: [rejects({ buttons: "x" }), rejects({ cards: "x" }), rejects({ buttons: [], cards: [] }), rejects({ cards: { type: "entities" } })],
       stub: Card.getStubConfig().buttons.map((b) => b.special || b.tap_action.navigation_path),
     };
   });
@@ -303,7 +308,7 @@ test("offers a visual editor and a starter config", async ({ page }) => {
     fields: ["label", "icon", "special", "tap_action"],
     label: "Buttons",
     helpers: ["all_users", "css"],
-    rejects: [true, true, false],
+    rejects: [true, true, false, false],
     stub: ["edit", "/config/automation/dashboard", "/config/tools", "sidebar"],
   });
 });

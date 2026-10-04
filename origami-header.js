@@ -49,7 +49,9 @@ const sheet = (css) => {
 };
 const idle = (cb) => (window.requestIdleCallback ? requestIdleCallback(cb, { timeout: 500 }) : setTimeout(cb, 200));
 const modeOf = (conf) => (conf.mode === "header" || conf.mode === "hidden" ? conf.mode : "menu");
-const hasContent = (conf) => (Array.isArray(conf.cards) && conf.cards.length > 0) || !Array.isArray(conf.buttons) || conf.buttons.length > 0;
+// A card copied in the Home Assistant editor has no leading "-", so cards takes one card or a list.
+const cardsOf = (conf) => (Array.isArray(conf.cards) ? conf.cards.filter(isObj) : isObj(conf.cards) ? [conf.cards] : []);
+const hasContent = (conf) => cardsOf(conf).length > 0 || !Array.isArray(conf.buttons) || conf.buttons.length > 0;
 const deepActive = () => {
   let el = document.activeElement;
   while (el?.shadowRoot?.activeElement) el = el.shadowRoot.activeElement;
@@ -241,7 +243,7 @@ class DrawerPanel extends HTMLElement {
       return tile;
     }));
     const conf = this._conf;
-    const cards = Array.isArray(conf.cards) ? conf.cards.filter(isObj) : [];
+    const cards = cardsOf(conf);
     customElements.whenDefined("hui-card").then(() => {
       if (conf === this._conf) this._cards.replaceChildren(...cards.map((config) => this._card(config)));
     });
@@ -386,9 +388,9 @@ const form = () => ({
   computeLabel: (schema) => t(schema.name),
   computeHelper: (schema) => (["all_users", "css"].includes(schema.name) ? t(`${schema.name}_help`) : undefined),
   assertConfig: (config) => {
-    for (const key of ["buttons", "cards"]) {
-      if (config[key] !== undefined && !(Array.isArray(config[key]) && config[key].every(isObj))) throw new Error(`${key} must be a list`);
-    }
+    const list = (value) => Array.isArray(value) && value.every(isObj);
+    if (config.buttons !== undefined && !list(config.buttons)) throw new Error("buttons must be a list");
+    if (config.cards !== undefined && !isObj(config.cards) && !list(config.cards)) throw new Error("cards must be a card or a list of cards");
   },
 });
 
