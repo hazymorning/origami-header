@@ -1,7 +1,7 @@
 // Origami Header: replaces the Home Assistant dashboard header with your own buttons and cards.
 // Configuration and usage: README.md
 
-const VERSION = "0.3.0";
+const VERSION = "0.3.1";
 const ROOT = "hui-root";
 const TAG = "origami-header";
 const CARD = "origami-header-card";
@@ -70,10 +70,13 @@ const deepActive = () => {
   return el;
 };
 
-const command = (cmd, root, node) => {
-  const el = root?.__origamiHeader;
-  if (cmd === "edit") root?._enableEditMode ? root._enableEditMode() : root?.lovelace?.setEditMode(true);
-  else if (cmd === "sidebar") fire(node, "hass-toggle-menu");
+// Cards that hand their actions to hass-action send fire-dom-event from home-assistant, outside the dashboard.
+const roots = new Set();
+
+const command = (cmd, root) => {
+  const el = root.__origamiHeader;
+  if (cmd === "edit") root._enableEditMode ? root._enableEditMode() : root.lovelace.setEditMode(true);
+  else if (cmd === "sidebar") fire(root, "hass-toggle-menu");
   else if (el?.slot === "toolbar" && ["open", "close", "toggle"].includes(cmd)) el[cmd]();
 };
 
@@ -313,7 +316,7 @@ class Panel extends HTMLElement {
 
   _run(button, action) {
     this.close();
-    if (action === "tap" && button.special) command(button.special, this._root, this);
+    if (action === "tap" && button.special) command(button.special, this._root);
     else if (active(button[`${action}_action`])) fire(this, "hass-action", { config: button, action });
   }
 
@@ -528,6 +531,7 @@ const findConfig = (config) => {
 let warned = false;
 
 const sync = (root) => {
+  roots.add(root);
   const config = root.lovelace?.config;
   if (config !== root.__origamiHeaderSource) root.__origamiHeaderConf = findConfig(config);
   root.__origamiHeaderSource = config;
@@ -613,8 +617,8 @@ const init = () => {
   // Any card can open, close or toggle the menu, edit the dashboard or toggle the sidebar with a fire-dom-event action.
   addEventListener("ll-custom", (ev) => {
     const cmd = ev.detail?.origami_header;
-    const path = ev.composedPath();
-    if (cmd) command(cmd, path.find((node) => node.localName === ROOT), path[0]);
+    const root = ev.composedPath().find((node) => node.localName === ROOT) || [...roots].find((r) => r.isConnected);
+    if (cmd && root) command(cmd, root);
   });
 
   console.info(`origami-header ${VERSION}`);
