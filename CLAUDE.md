@@ -14,7 +14,7 @@ Run both before every commit.
 - Plain modern JavaScript. Keep the module dependency-free and in one file.
 - Add code only for a real need. No abstractions for a single use, no defensive checks for cases that cannot happen.
 - Comments explain Home Assistant internals or decisions that are not obvious from the code. No JSDoc, no comments that restate the code.
-- Logging is limited to warnings for unsupported versions and invalid CSS.
+- Logging is limited to the warning for unsupported versions.
 - Keep the fail-safe: when Home Assistant changes its structure, the default header must stay usable.
 - Every behavior change gets a test. Tests describe behavior in plain words.
 
@@ -36,6 +36,7 @@ The module depends on these. When an update breaks something, check them first:
 - `hui-root`: `updated()`, `slot[name="toolbar"]`, `.header` and its `backdrop-filter`, `--header-height`, `_enableEditMode()`
 - `hui-card`: removes cards whose element is `hidden`, sets `preview` in edit mode and in the card editor
 - the scoped custom element registry polyfill in the Home Assistant app bundle
+- `action-handler`: `bind()` and the `action` event with tap, hold and double tap, as used by tiles and badges
 - the events `hass-action`, `hass-toggle-menu`, `ll-custom` and `location-changed`
 
 `test/mock/mock-ha.js` reproduces this behavior. Update it together with the module, and check the result on a real Home Assistant instance before a release.
