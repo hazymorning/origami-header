@@ -5,7 +5,7 @@ const BUTTONS = [
   { name: "Two", icon: "mdi:numeric-2", special: "sidebar" },
   { name: "Three", icon: "mdi:numeric-3", tap_action: { action: "navigate", navigation_path: "/config/three" } },
 ];
-const CARD = { type: "custom:origami-header-card", buttons: BUTTONS, cards: [{ type: "entities" }], css: ".sheet { outline: 3px solid red; }" };
+const CARD = { type: "custom:origami-header-card", mode: "menu", buttons: BUTTONS, cards: [{ type: "entities" }], css: ".sheet { outline: 3px solid red; }" };
 const HEADER = { ...CARD, mode: "header" };
 const dashboard = (...cards) => ({ views: [{ path: "home", cards }] });
 
@@ -30,7 +30,6 @@ const drawer = (page) =>
     const deep = (node) => (node?.shadowRoot?.activeElement ? deep(node.shadowRoot.activeElement) : node);
     return {
       open: el.hasAttribute("open"),
-      handle: s.querySelector(".handle").getBoundingClientRect().width > 0,
       bar: rect(".bar"),
       cards: rect(".cards"),
       buttons: rect(".buttons"),
@@ -76,24 +75,10 @@ const press = (page, index, action = "tap") =>
     [index, action],
   );
 
-const center = (page, selector) =>
-  page.evaluate((selector) => {
-    const r = window.root.querySelector("origami-header").shadowRoot.querySelector(selector).getBoundingClientRect();
-    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
-  }, selector);
-
 const settled = (page) =>
   expect
     .poll(() => page.evaluate(() => getComputedStyle(window.root.querySelector("origami-header").shadowRoot.querySelector(".sheet")).transform))
     .toBe("none");
-
-async function drag(page, selector, dy) {
-  const { x, y } = await center(page, selector);
-  await page.mouse.move(x, y);
-  await page.mouse.down();
-  await page.mouse.move(x, y + dy, { steps: 6 });
-  await page.mouse.up();
-}
 
 // Swipes with one finger and returns where the menu was while the finger was down.
 const swipe = (page, dy) =>
@@ -180,10 +165,16 @@ test("hidden mode, or a card with nothing to show, only hides the header", async
   }
 });
 
+test("without a mode, the buttons and cards form the header", async ({ page }) => {
+  const { mode, ...card } = CARD;
+  await start(page, { config: dashboard(card) });
+  await expect.poll(async () => (await drawer(page))?.barNames).toEqual(["One", "Two", "Three"]);
+});
+
 test("header mode shows the buttons and cards as the header and starts the view below it", async ({ page }) => {
   await start(page, { config: dashboard(HEADER) });
   await expect.poll(async () => (await drawer(page)).barCards).toEqual(["card:entities"]);
-  expect(await drawer(page)).toMatchObject({ barNames: ["One", "Two", "Three"], handle: false });
+  expect((await drawer(page)).barNames).toEqual(["One", "Two", "Three"]);
   expect((await snapshot(page)).headerBackground).not.toBe("rgba(0, 0, 0, 0)");
   await expect
     .poll(async () => (await snapshot(page)).viewPadding === `${(await drawer(page)).bar[3]}px`)
@@ -193,6 +184,13 @@ test("header mode shows the buttons and cards as the header and starts the view 
 test("takes a single card as the card editor copies it, without a leading dash", async ({ page }) => {
   await start(page, { config: dashboard({ ...HEADER, buttons: [], cards: { type: "entities" } }) });
   await expect.poll(async () => (await drawer(page))?.barCards).toEqual(["card:entities"]);
+});
+
+test("an empty cards field, as the editor leaves it when cleared, shows no card", async ({ page }) => {
+  await start(page, { config: dashboard({ ...HEADER, cards: {} }) });
+  await expect.poll(async () => (await drawer(page))?.barNames).toEqual(["One", "Two", "Three"]);
+  await page.evaluate(() => new Promise(requestAnimationFrame));
+  expect((await drawer(page)).barCards).toEqual([]);
 });
 
 test("header mode puts the cards and the buttons as badges in one row, and has no menu", async ({ page }) => {
@@ -255,17 +253,38 @@ test("the menu shows the buttons in two columns, or as a grid of four with the i
   }
 });
 
-test("the handle opens the menu on tap and on pull", async ({ page }) => {
+test("icons are plain in the list and in the header, and sit on a tinted circle in the grid", async ({ page }) => {
+  const star = [{ name: "Star", icon: "mdi:star", color: "#00ff00" }];
+  const icon = () =>
+    page.evaluate(() => {
+      const style = getComputedStyle(window.root.querySelector("origami-header").shadowRoot.querySelector(".button ha-icon"));
+      return { size: style.getPropertyValue("--mdc-icon-size").trim(), tinted: style.backgroundColor !== "rgba(0, 0, 0, 0)", width: style.width };
+    });
+  for (const [card, look] of [
+    [{ ...CARD, buttons: star }, { size: "20px", tinted: false }],
+    [{ ...HEADER, buttons: star }, { size: "18px", tinted: false }],
+    [{ ...CARD, buttons: star, layout: "grid" }, { size: "24px", tinted: true, width: "36px" }],
+  ]) {
+    await start(page, { config: dashboard(card) });
+    await command(page, "open");
+    await expect.poll(icon).toMatchObject(look);
+  }
+});
+
+test("the menu stays out of sight until a card opens it, and has the same padding below its content as around it", async ({ page }) => {
   await start(page);
-  expect((await drawer(page)).handle).toBe(true);
-
-  await page.click("origami-header >> .handle");
-  expect((await drawer(page)).open).toBe(true);
-  await page.keyboard.press("Escape");
-  expect((await drawer(page)).open).toBe(false);
-
-  await drag(page, ".handle", 60);
-  expect((await drawer(page)).open).toBe(true);
+  const visible = () =>
+    page.evaluate(() =>
+      [...window.root.querySelector("origami-header").shadowRoot.querySelectorAll("*")]
+        .filter((el) => el.checkVisibility({ visibilityProperty: true }) && el.getBoundingClientRect().height > 0)
+        .map((el) => el.className),
+    );
+  expect(await visible()).toEqual([]);
+  await command(page, "open");
+  await settled(page);
+  expect(await visible()).toContain("sheet");
+  const { sheet, buttons: row } = await drawer(page);
+  expect(sheet[1] + sheet[3] - (row[1] + row[3])).toBe(24);
 });
 
 test("the menu follows a swipe toward its edge and closes, a short swipe lets it spring back", async ({ page }) => {
@@ -286,30 +305,27 @@ test("the menu follows a swipe toward its edge and closes, a short swipe lets it
   }
 });
 
-test("hide_handle hides the handle, the menu has no grip below its content, and a card can still open it", async ({ page }) => {
-  await start(page, { config: dashboard({ ...CARD, hide_handle: true }) });
-  expect((await drawer(page)).handle).toBe(false);
-  await command(page, "toggle");
-  expect((await drawer(page)).open).toBe(true);
-  await settled(page);
-  const { sheet, buttons: row } = await drawer(page);
-  expect(sheet[1] + sheet[3] - (row[1] + row[3])).toBe(24);
-  expect(await page.evaluate(() => window.root.querySelector("origami-header").shadowRoot.querySelector(".grip"))).toBe(null);
-  await page.keyboard.press("Escape");
-  expect((await drawer(page)).open).toBe(false);
-});
-
-test("focus moves to a button only when opened with the keyboard", async ({ page }) => {
+test("focus moves to a button only when a card opens the menu from the keyboard, and goes back when it closes", async ({ page }) => {
   await start(page);
-  await page.click("origami-header >> .handle");
+  // A card on the dashboard with a fire-dom-event action.
+  await page.evaluate(() => {
+    const card = Object.assign(document.createElement("button"), { className: "opener", textContent: "Menu" });
+    card.addEventListener("click", () => {
+      const ev = new Event("ll-custom", { bubbles: true, composed: true });
+      ev.detail = { action: "fire-dom-event", origami_header: "toggle" };
+      card.dispatchEvent(ev);
+    });
+    window.root.shadowRoot.querySelector("#view").append(card);
+  });
+  await page.click(".opener");
   await expect.poll(async () => (await drawer(page)).focus).toBe("sheet");
   await page.keyboard.press("Escape");
+  expect((await drawer(page)).focus).toBe("opener");
 
-  await page.evaluate(() => window.root.querySelector("origami-header").shadowRoot.querySelector(".handle").focus());
   await page.keyboard.press("Enter");
   await expect.poll(async () => (await drawer(page)).focus).toBe("button");
   await page.keyboard.press("Escape");
-  expect((await drawer(page)).focus).toBe("handle");
+  expect((await drawer(page)).focus).toBe("opener");
 });
 
 test("follows dashboard changes without a reload", async ({ page }) => {
@@ -326,11 +342,19 @@ test("follows dashboard changes without a reload", async ({ page }) => {
   expect(await snapshot(page)).toMatchObject({ headerDisplay: "block", assigned: [] });
 });
 
-test("shows the default header in edit mode", async ({ page }) => {
-  await start(page, { config: dashboard(HEADER) });
+test("shows the default header in edit mode and the custom header again after it", async ({ page }) => {
+  const many = Array.from({ length: 8 }, (_, i) => ({ name: `Button ${i + 1}`, icon: "mdi:star" }));
+  await start(page, { config: dashboard({ ...HEADER, buttons: many }) });
+  const below = async () => (await snapshot(page)).viewPadding === `${(await drawer(page)).bar[3]}px`;
+  await expect.poll(below).toBe(true);
+  expect((await drawer(page)).bar[3]).toBeGreaterThan(56);
+
   await page.evaluate(() => window.root.lovelace.setEditMode(true));
   await expect.poll(async () => (await snapshot(page)).viewPadding).toBe("56px");
   expect(await page.evaluate(() => !!window.root.shadowRoot.querySelector(".toolbar.edit"))).toBe(true);
+
+  await page.evaluate(() => window.root.lovelace.setEditMode(false));
+  await expect.poll(below).toBe(true);
 });
 
 test("runs the buttons in the menu and in the header", async ({ page }) => {
@@ -393,6 +417,14 @@ test("cards that hand their actions to Home Assistant can also open the menu, ed
   await send("edit");
   const events = (await page.evaluate(() => window.events)).filter((e) => e.type !== "hass-action");
   expect(events.map((e) => [e.type, e.target])).toEqual([["hass-toggle-menu", "hui-root"], ["enable-edit-mode", undefined]]);
+
+  // After a switch to another dashboard, the commands go to that one.
+  await page.evaluate((config) => {
+    window.root.remove();
+    window.boot({ config });
+  }, dashboard(CARD));
+  await send("open");
+  expect((await drawer(page)).open).toBe(true);
 });
 
 test("card is invisible on the dashboard and previews the header or menu in edit mode", async ({ page }) => {
@@ -467,9 +499,9 @@ test("offers a visual editor and a starter config", async ({ page }) => {
     };
     // Home Assistant shows a field while its condition holds for the current config.
     const visible = (schema, mode) => {
-      const { field: key, operator, value } = schema.visible ?? {};
+      const { field: key, operator = "eq", value } = schema.visible ?? {};
       if (!key) return true;
-      return operator === "not_eq" ? mode !== value : !value.includes(mode);
+      return operator === "eq" ? mode === value : mode !== value;
     };
     const names = form.schema.map((s) => s.name);
     return {
@@ -480,29 +512,29 @@ test("offers a visual editor and a starter config", async ({ page }) => {
       actions: field("buttons").selector.object.fields.tap_action.selector.ui_action,
       label: form.computeLabel({ name: "mode" }),
       helpers: names.filter((name) => form.computeHelper({ name })),
-      rejects: [rejects({ buttons: "x" }), rejects({ cards: "x" }), rejects({ buttons: [], cards: [] }), rejects({ cards: { type: "entities" } })],
+      rejects: [rejects({ buttons: "x" }), rejects({ cards: "x" }), rejects({ buttons: [], cards: [] }), rejects({ cards: { type: "entities" } }), rejects({ cards: {} })],
       stub: Card.getStubConfig(),
     };
   });
-  expect(editor.names).toEqual(["mode", "buttons", "cards", "", "hide_handle", "all_users", "css"]);
+  expect(editor.names).toEqual(["mode", "buttons", "cards", "", "all_users"]);
   expect(editor.mode).toMatchObject({ mode: "box", box_max_columns: 1 });
   expect(editor.mode.options).toEqual([
-    { value: "menu", label: "Fold-out menu", description: "Hides the header. Your buttons and cards fold out from a handle at the edge of the screen." },
     { value: "header", label: "Custom header", description: "Your buttons and cards form the header." },
+    { value: "menu", label: "Fold-out menu", description: "Hides the header. Your buttons and cards fold out when another card opens the menu." },
     { value: "hidden", label: "No header", description: "Hides the header, for example on wall tablets." },
   ]);
   expect(editor.shown).toEqual({
-    default: ["mode", "buttons", "cards", "", "hide_handle", "all_users", "css"],
-    menu: ["mode", "buttons", "cards", "", "hide_handle", "all_users", "css"],
-    header: ["mode", "buttons", "cards", "all_users", "css"],
+    default: ["mode", "buttons", "cards", "all_users"],
+    menu: ["mode", "buttons", "cards", "", "all_users"],
+    header: ["mode", "buttons", "cards", "all_users"],
     hidden: ["mode"],
   });
   expect(editor.fields).toEqual(["name", "icon", "color", "special", "tap_action", "hold_action", "double_tap_action"]);
   expect(editor.actions).toEqual({ actions: ["navigate", "url", "perform-action", "assist", "none"], default_action: "none" });
   expect(editor.label).toBe("Header");
-  expect(editor.helpers).toEqual(["hide_handle", "all_users", "css"]);
-  expect(editor.rejects).toEqual([true, true, false, false]);
-  expect(editor.stub.mode).toBe("menu");
+  expect(editor.helpers).toEqual(["all_users"]);
+  expect(editor.rejects).toEqual([true, true, false, false, false]);
+  expect(editor.stub.mode).toBe("header");
   expect(editor.stub.buttons.map((b) => b.special || b.tap_action.navigation_path)).toEqual(["edit", "/config/automation/dashboard", "/config/tools", "sidebar"]);
   expect(editor.stub.buttons.map((b) => b.name)).toEqual(["Edit", "Automations", "Tools", "Sidebar"]);
 });
@@ -516,11 +548,10 @@ test("starts only once when loaded twice", async ({ page }) => {
 
 test("uses German labels when Home Assistant runs in German", async ({ page }) => {
   await start(page, { query: "lang=de", config: dashboard({ type: "custom:origami-header-card" }) });
-  await command(page, "open");
-  await expect.poll(async () => (await drawer(page)).names).toContain("Seiten\u00adleiste");
+  await expect.poll(async () => (await drawer(page))?.names).toContain("Seiten\u00adleiste");
   const form = await page.evaluate(() => {
     const { schema, computeLabel } = customElements.get("origami-header-card").getConfigForm();
     return { label: computeLabel({ name: "mode" }), modes: schema[0].selector.select.options.map((o) => o.label) };
   });
-  expect(form).toEqual({ label: "Kopfzeile", modes: ["Ausklappmenü", "Eigene Kopfzeile", "Keine Kopfzeile"] });
+  expect(form).toEqual({ label: "Kopfzeile", modes: ["Eigene Kopfzeile", "Ausklappmenü", "Keine Kopfzeile"] });
 });

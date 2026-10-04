@@ -1,7 +1,7 @@
 // Origami Header: replaces the Home Assistant dashboard header with your own buttons and cards.
 // Configuration and usage: README.md
 
-const VERSION = "0.3.1";
+const VERSION = "0.4.0";
 const ROOT = "hui-root";
 const TAG = "origami-header";
 const CARD = "origami-header-card";
@@ -10,22 +10,19 @@ const STRINGS = {
   en: {
     edit: "Edit", automations: "Automations", tools: "Tools", sidebar: "Sidebar",
     mode: "Header", mode_menu: "Fold-out menu", mode_header: "Custom header", mode_hidden: "No header",
-    mode_menu_info: "Hides the header. Your buttons and cards fold out from a handle at the edge of the screen.",
+    mode_menu_info: "Hides the header. Your buttons and cards fold out when another card opens the menu.",
     mode_header_info: "Your buttons and cards form the header.",
     mode_hidden_info: "Hides the header, for example on wall tablets.",
     buttons: "Buttons", name: "Name", icon: "Icon", color: "Color",
     special: "Function", special_info: "Replaces the tap behavior.", special_edit: "Edit dashboard", special_sidebar: "Toggle sidebar",
     tap_action: "Tap behavior", hold_action: "Hold behavior", double_tap_action: "Double tap behavior",
     cards: "Cards", position: "Position", top: "Top", bottom: "Bottom", layout: "Layout", list: "List", grid: "Grid",
-    hide_handle: "Hide handle", hide_handle_help: "Open the menu from another card instead, see the README.",
     all_users: "Show for all users", all_users_help: "Otherwise only admins see it, and other users get no header.",
-    css: "CSS", css_help: "Class names are in the README.",
-    open: "Open menu",
   },
   de: {
     edit: "Bear\u00adbeiten", automations: "Automa\u00adtionen", tools: "Werk\u00adzeuge", sidebar: "Seiten\u00adleiste",
     mode: "Kopfzeile", mode_menu: "Ausklappmenü", mode_header: "Eigene Kopfzeile", mode_hidden: "Keine Kopfzeile",
-    mode_menu_info: "Blendet die Kopfzeile aus. Deine Knöpfe und Karten klappen über einen Griff am Bildschirmrand auf.",
+    mode_menu_info: "Blendet die Kopfzeile aus. Deine Knöpfe und Karten klappen auf, wenn eine andere Karte das Menü öffnet.",
     mode_header_info: "Deine Knöpfe und Karten bilden die Kopfzeile.",
     mode_hidden_info: "Blendet die Kopfzeile aus, zum Beispiel für Wandtablets.",
     buttons: "Knöpfe", name: "Name", icon: "Symbol", color: "Farbe",
@@ -33,10 +30,7 @@ const STRINGS = {
     special_sidebar: "Seitenleiste umschalten",
     tap_action: "Verhalten bei Antippen", hold_action: "Verhalten bei Festhalten", double_tap_action: "Verhalten bei Doppeltippen",
     cards: "Karten", position: "Position", top: "Oben", bottom: "Unten", layout: "Anordnung", list: "Liste", grid: "Raster",
-    hide_handle: "Griff ausblenden", hide_handle_help: "Das Menü öffnest du dann über eine andere Karte, siehe README.",
     all_users: "Für alle Benutzer anzeigen", all_users_help: "Sonst nur für Admins. Andere Benutzer sehen dann keine Kopfzeile.",
-    css: "CSS", css_help: "Die Klassennamen stehen in der README.",
-    open: "Menü öffnen",
   },
 };
 const t = (key) => (STRINGS[document.documentElement.lang.slice(0, 2)] || STRINGS.en)[key] ?? STRINGS.en[key];
@@ -57,9 +51,9 @@ const sheet = (css) => {
   return s;
 };
 const idle = (cb) => (window.requestIdleCallback ? requestIdleCallback(cb, { timeout: 500 }) : setTimeout(cb, 200));
-const modeOf = (conf) => (conf.mode === "header" || conf.mode === "hidden" ? conf.mode : "menu");
-// A card copied in the Home Assistant editor has no leading "-", so cards takes one card or a list.
-const cardsOf = (conf) => (Array.isArray(conf.cards) ? conf.cards.filter(isObj) : isObj(conf.cards) ? [conf.cards] : []);
+const modeOf = (conf) => (conf.mode === "menu" || conf.mode === "hidden" ? conf.mode : "header");
+// A card copied in the Home Assistant editor has no leading "-", and clearing the cards field leaves {}.
+const cardsOf = (conf) => [conf.cards].flat().filter((card) => isObj(card) && card.type);
 const hasContent = (conf) => cardsOf(conf).length > 0 || !Array.isArray(conf.buttons) || conf.buttons.length > 0;
 const active = (action) => isObj(action) && action.action !== "none";
 // Theme colors such as "amber" become var(--amber-color), as in tiles and badges.
@@ -71,7 +65,8 @@ const deepActive = () => {
 };
 
 // Cards that hand their actions to hass-action send fire-dom-event from home-assistant, outside the dashboard.
-const roots = new Set();
+// Their commands go to the dashboard that rendered last, which is the one on screen.
+let lastRoot = null;
 
 const command = (cmd, root) => {
   const el = root.__origamiHeader;
@@ -81,34 +76,6 @@ const command = (cmd, root) => {
 };
 
 let keyboard = false;
-
-// A tap runs the action, and so does pulling the element far enough in the given direction.
-const pull = (el, direction, action) => {
-  let pulled = false;
-  el.addEventListener("pointerdown", (down) => {
-    const dir = direction();
-    pulled = false;
-    el.setPointerCapture(down.pointerId);
-    const move = (ev) => {
-      if ((ev.clientY - down.clientY) * dir < 24) return;
-      pulled = true;
-      stop();
-      action();
-    };
-    const stop = () => {
-      el.removeEventListener("pointermove", move);
-      el.removeEventListener("pointerup", stop);
-      el.removeEventListener("pointercancel", stop);
-    };
-    el.addEventListener("pointermove", move);
-    el.addEventListener("pointerup", stop);
-    el.addEventListener("pointercancel", stop);
-  });
-  el.addEventListener("click", () => {
-    if (pulled) pulled = false;
-    else action();
-  });
-};
 
 // Like the Home Assistant bottom sheet, the menu follows a swipe toward its edge and closes past a quarter.
 const swipe = (el, direction, close) => {
@@ -166,13 +133,6 @@ const STYLE = sheet(`
 :host([mode="header"]) .cards { flex: 1 1 12rem; min-width: 0; }
 :host([mode="header"]) .buttons { display: flex; flex-wrap: wrap; justify-content: flex-end; margin-inline-start: auto; }
 .note { display: none; }
-.handle { display: none; position: fixed; top: calc(var(--safe-area-inset-top, 0px) + 4px); left: 50%; transform: translateX(-50%); align-items: center; justify-content: center;
-  box-sizing: border-box; width: 96px; height: 24px; margin: 0; padding: 0; border: 0; border-radius: 12px; background: none; cursor: grab; touch-action: none; pointer-events: auto; }
-:host([drawer]:not([no-handle])) .handle { display: flex; }
-:host([bottom]) .handle { top: auto; bottom: calc(var(--safe-area-inset-bottom, 0px) + 4px); }
-.handle::before { content: ""; width: 40px; height: 4px; border-radius: 2px; background: var(--ha-bottom-sheet-handle-color, var(--divider-color, rgba(127, 127, 127, 0.3))); }
-.handle:hover::before { background: var(--secondary-text-color); }
-.handle:focus-visible { outline: 2px solid var(--ha-color-focus, var(--primary-color)); outline-offset: -2px; }
 .scrim { position: fixed; inset: 0; opacity: 0; visibility: hidden; pointer-events: none; touch-action: none;
   backdrop-filter: var(--ha-dialog-scrim-backdrop-filter, brightness(68%)); -webkit-backdrop-filter: var(--ha-dialog-scrim-backdrop-filter, brightness(68%));
   transition: opacity ${TIME} ease, visibility 0s ${TIME}; }
@@ -191,22 +151,24 @@ const STYLE = sheet(`
 .buttons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ha-space-2, 8px); }
 :host([grid]) .buttons { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .button { --button-color: var(--color, var(--state-inactive-color)); --ha-ripple-color: var(--button-color); --ha-ripple-hover-opacity: 0.04; --ha-ripple-pressed-opacity: 0.12;
-  position: relative; display: flex; align-items: center; gap: 10px; box-sizing: border-box; min-width: 0; min-height: 56px; padding: 0 10px;
+  position: relative; display: flex; align-items: center; gap: var(--ha-space-3, 12px); box-sizing: border-box; min-width: 0; min-height: var(--ha-space-12, 48px);
+  padding: 0 var(--ha-space-4, 16px);
   border: var(--ha-card-border-width, 1px) solid var(--ha-card-border-color, var(--divider-color, #e0e0e0)); border-radius: var(--ha-card-border-radius, var(--ha-border-radius-lg, 12px));
   background: var(--ha-card-background, var(--card-background-color, white)); box-shadow: var(--ha-card-box-shadow, none); backdrop-filter: var(--ha-card-backdrop-filter, none);
   color: var(--primary-text-color); cursor: pointer; outline: none; user-select: none; transition: box-shadow 180ms ease-in-out, border-color 180ms ease-in-out; }
 .button:focus-visible { border-color: var(--button-color); box-shadow: var(--ha-card-box-shadow, 0 0 0 0 transparent), 0 0 0 1px var(--button-color); }
 .button ha-ripple { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
-.button ha-icon { flex: none; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; --mdc-icon-size: 24px;
-  border-radius: var(--ha-tile-icon-border-radius, var(--ha-border-radius-pill, 9999px)); background: color-mix(in srgb, var(--button-color) 20%, transparent); color: var(--button-color); }
+.button ha-icon { flex: none; display: flex; color: var(--button-color); --mdc-icon-size: 20px; }
 .button:not(:has(.name)) { justify-content: center; }
 .name { min-width: 0; overflow: hidden; overflow-wrap: break-word; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
   font-size: var(--ha-font-size-m, 14px); font-weight: var(--ha-font-weight-medium, 500); line-height: var(--ha-line-height-condensed, 1.2); letter-spacing: 0.1px; }
-:host([grid]) .button { flex-direction: column; justify-content: center; padding: 10px var(--ha-space-2, 8px); text-align: center; }
+:host([grid]) .button { flex-direction: column; justify-content: center; gap: var(--ha-space-2, 8px); padding: var(--ha-space-3, 12px) var(--ha-space-2, 8px); text-align: center; }
+:host([grid]) .button ha-icon { align-items: center; justify-content: center; width: 36px; height: 36px; --mdc-icon-size: 24px;
+  border-radius: var(--ha-tile-icon-border-radius, var(--ha-border-radius-pill, 9999px)); background: color-mix(in srgb, var(--button-color) 20%, transparent); }
 :host([mode="header"]) .button { gap: var(--ha-space-2, 8px); height: var(--ha-badge-size, 36px); min-height: 0; min-width: var(--ha-badge-size, 36px); padding: 0 var(--ha-space-3, 12px);
   border-radius: var(--ha-badge-border-radius, calc(var(--ha-badge-size, 36px) / 2)); }
 :host([mode="header"]) .button:not(:has(.name)) { padding: 0; }
-:host([mode="header"]) .button ha-icon { width: auto; height: auto; margin-inline-start: -4px; background: none; --mdc-icon-size: var(--ha-badge-icon-size, 18px); }
+:host([mode="header"]) .button ha-icon { margin-inline-start: -4px; --mdc-icon-size: var(--ha-badge-icon-size, 18px); }
 :host([mode="header"]) .button:not(:has(.name)) ha-icon { margin: 0; }
 :host([mode="header"]) .name { display: block; white-space: nowrap; font-size: var(--ha-badge-font-size, var(--ha-font-size-s, 12px)); }
 `);
@@ -229,21 +191,18 @@ class Panel extends HTMLElement {
     this._css = new CSSStyleSheet();
     root.adoptedStyleSheets = [STYLE, this._css, ...extra];
     root.innerHTML = `
-      <div class="bar"><button class="handle" type="button" aria-expanded="false"></button></div>
+      <div class="bar"></div>
       <div class="note"></div>
       <div class="scrim"></div>
       <div class="sheet" role="dialog" aria-modal="true" tabindex="-1" inert><div class="cards"></div><div class="buttons"></div></div>`;
     this._bar = root.querySelector(".bar");
-    this._handle = root.querySelector(".handle");
     this._sheet = root.querySelector(".sheet");
     this._cards = root.querySelector(".cards");
     this._buttons = root.querySelector(".buttons");
     this._onKey = (ev) => ev.key === "Escape" && this.close();
     this._onNav = () => this.close();
     root.querySelector(".scrim").addEventListener("click", () => this.close());
-    const bottom = () => this.hasAttribute("bottom");
-    pull(this._handle, () => (bottom() ? -1 : 1), () => this.open());
-    swipe(this._sheet, () => (bottom() ? 1 : -1), () => this.close());
+    swipe(this._sheet, () => (this.hasAttribute("bottom") ? 1 : -1), () => this.close());
   }
 
   get hass() {
@@ -261,11 +220,9 @@ class Panel extends HTMLElement {
     const mode = modeOf(conf);
     this.setAttribute("mode", mode);
     this.toggleAttribute("drawer", mode === "menu" && hasContent(conf));
-    this.toggleAttribute("no-handle", conf.hide_handle === true);
     this.toggleAttribute("bottom", conf.position === "bottom");
     this.toggleAttribute("grid", mode === "menu" && conf.layout === "grid");
     this._css.replaceSync(typeof conf.css === "string" ? conf.css : "");
-    this._handle.setAttribute("aria-label", t("open"));
     this._sheet.setAttribute("aria-label", t("mode_menu"));
     this.shadowRoot.querySelector(".note").textContent = t("mode_hidden");
     this._items = Array.isArray(conf.buttons) ? conf.buttons.filter(isObj) : defaultButtons();
@@ -283,7 +240,7 @@ class Panel extends HTMLElement {
 
   _button(button) {
     const el = document.createElement("div");
-    const label = String(button.name || (button.special ? t(`special_${button.special}`) : "")).replaceAll("\u00ad", "");
+    const label = String(button.name || t(`special_${button.special}`) || "").replaceAll("\u00ad", "");
     el.className = "button";
     el.setAttribute("role", "button");
     el.tabIndex = 0;
@@ -328,7 +285,6 @@ class Panel extends HTMLElement {
     this._feed();
     this._sheet.inert = false;
     this.setAttribute("open", "");
-    this._handle.setAttribute("aria-expanded", "true");
     addEventListener("keydown", this._onKey);
     addEventListener("location-changed", this._onNav);
     requestAnimationFrame(() => {
@@ -342,7 +298,6 @@ class Panel extends HTMLElement {
     if (this.shadowRoot.activeElement) this._opener?.focus?.({ preventScroll: true });
     this._sheet.inert = true;
     this.removeAttribute("open");
-    this._handle.setAttribute("aria-expanded", "false");
     removeEventListener("keydown", this._onKey);
     removeEventListener("location-changed", this._onNav);
   }
@@ -393,7 +348,7 @@ const select = (pairs) => ({ select: { mode: "dropdown", options: pairs.map(([va
 const ACTIONS = ["navigate", "url", "perform-action", "assist", "none"];
 const uiAction = (key) => ({ label: t(key), selector: { ui_action: { actions: ACTIONS, default_action: "none" } } });
 const SHOWN = { field: "mode", operator: "not_eq", value: "hidden" };
-const MENU = { field: "mode", operator: "not_in", value: ["header", "hidden"] };
+const MENU = { field: "mode", value: "menu" };
 const form = () => ({
   schema: [
     {
@@ -402,7 +357,7 @@ const form = () => ({
         select: {
           mode: "box",
           box_max_columns: 1,
-          options: ["menu", "header", "hidden"].map((value) => ({ value, label: t(`mode_${value}`), description: t(`mode_${value}_info`) })),
+          options: ["header", "menu", "hidden"].map((value) => ({ value, label: t(`mode_${value}`), description: t(`mode_${value}_info`) })),
         },
       },
     },
@@ -436,12 +391,10 @@ const form = () => ({
         { name: "layout", selector: select([["list", "list"], ["grid", "grid"]]) },
       ],
     },
-    { name: "hide_handle", visible: MENU, selector: { boolean: {} } },
     { name: "all_users", visible: SHOWN, selector: { boolean: {} } },
-    { name: "css", visible: SHOWN, selector: { text: { multiline: true } } },
   ],
   computeLabel: (schema) => t(schema.name),
-  computeHelper: (schema) => (["hide_handle", "all_users", "css"].includes(schema.name) ? t(`${schema.name}_help`) : undefined),
+  computeHelper: (schema) => (schema.name === "all_users" ? t("all_users_help") : undefined),
   assertConfig: (config) => {
     const list = (value) => Array.isArray(value) && value.every(isObj);
     if (config.buttons !== undefined && !list(config.buttons)) throw new Error("buttons must be a list");
@@ -457,7 +410,7 @@ class OrigamiHeaderCard extends Panel {
   }
 
   static getStubConfig() {
-    return { mode: "menu", buttons: defaultButtons().map((button) => ({ ...button, name: button.name.replaceAll("\u00ad", "") })) };
+    return { mode: "header", buttons: defaultButtons().map((button) => ({ ...button, name: button.name.replaceAll("\u00ad", "") })) };
   }
 
   constructor() {
@@ -531,7 +484,7 @@ const findConfig = (config) => {
 let warned = false;
 
 const sync = (root) => {
-  roots.add(root);
+  lastRoot = root;
   const config = root.lovelace?.config;
   if (config !== root.__origamiHeaderSource) root.__origamiHeaderConf = findConfig(config);
   root.__origamiHeaderSource = config;
@@ -563,9 +516,7 @@ const sync = (root) => {
   el.sync(root, conf);
 };
 
-const patch = (cls) => {
-  const proto = cls?.prototype;
-  if (!proto || proto.__origamiHeaderPatched) return false;
+const patch = (proto) => {
   const updated = proto.updated;
   proto.updated = function (changed) {
     updated?.call(this, changed);
@@ -575,8 +526,6 @@ const patch = (cls) => {
       console.error("origami-header:", err);
     }
   };
-  proto.__origamiHeaderPatched = true;
-  return true;
 };
 
 const findRoots = (node, found = []) => {
@@ -584,14 +533,6 @@ const findRoots = (node, found = []) => {
   if (node.shadowRoot) findRoots(node.shadowRoot, found);
   for (const child of node.children) findRoots(child, found);
   return found;
-};
-
-const define = (tag, cls) => {
-  try {
-    if (!customElements.get(tag)) customElements.define(tag, cls);
-  } catch (err) {
-    console.warn(`origami-header: could not define ${tag}`, err);
-  }
 };
 
 const init = () => {
@@ -607,18 +548,19 @@ const init = () => {
   addEventListener("pointerdown", () => (keyboard = false), true);
 
   // Home Assistant looks up cards in the registry polyfill that comes with its app bundle.
-  // Once hui-root exists the polyfill is installed, and no view has rendered yet.
+  // Once hui-root exists the polyfill is installed. A dashboard that rendered before then renders again.
   customElements.whenDefined(ROOT).then(() => {
-    define(TAG, OrigamiHeader);
-    define(CARD, OrigamiHeaderCard);
-    if (patch(customElements.get(ROOT))) findRoots(document.body).forEach((root) => root.requestUpdate());
+    customElements.define(TAG, OrigamiHeader);
+    customElements.define(CARD, OrigamiHeaderCard);
+    patch(customElements.get(ROOT).prototype);
+    findRoots(document.body).forEach((root) => root.requestUpdate());
   });
 
   // Any card can open, close or toggle the menu, edit the dashboard or toggle the sidebar with a fire-dom-event action.
   addEventListener("ll-custom", (ev) => {
     const cmd = ev.detail?.origami_header;
-    const root = ev.composedPath().find((node) => node.localName === ROOT) || [...roots].find((r) => r.isConnected);
-    if (cmd && root) command(cmd, root);
+    const root = ev.composedPath().find((node) => node.localName === ROOT) || lastRoot;
+    if (cmd && root?.isConnected) command(cmd, root);
   });
 
   console.info(`origami-header ${VERSION}`);

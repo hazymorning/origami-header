@@ -1,4 +1,6 @@
+# Opens from another card, see "Opening the menu" in the README.
 type: custom:origami-header-card
+mode: menu
 layout: grid
 cards:
   - type: heading
