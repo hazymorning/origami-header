@@ -145,8 +145,11 @@ const snapshot = (root) => {
 
 window.snapshot = () => snapshot(window.root);
 
-window.boot = ({ config, admin = true }) => {
+// The page path stands in for the dashboard URL, so its first segment is the panel.
+window.boot = ({ config, admin = true, panelTitle = "home" }) => {
   const root = document.createElement("hui-root");
+  const panels = { [location.pathname.split("/")[1]]: { title: panelTitle } };
+  const localize = (key) => ({ "panel.home": "Overview" })[key] ?? "";
   const lovelace = (cfg, editMode) => ({
     config: cfg,
     editMode,
@@ -154,7 +157,7 @@ window.boot = ({ config, admin = true }) => {
       root.lovelace = lovelace(root.lovelace.config, value);
     },
   });
-  root.hass = { user: { name: "Test", is_admin: admin }, states: {} };
+  root.hass = { user: { name: "Test", is_admin: admin }, states: {}, panels, localize };
   root.lovelace = lovelace(config, false);
   window.root = root;
   window.save = (cfg) => {

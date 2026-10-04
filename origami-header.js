@@ -1,7 +1,7 @@
 // Origami Header: replaces the Home Assistant dashboard header with a drawer.
 // Configuration and usage: README.md
 
-const VERSION = "0.1.0";
+const VERSION = "0.1.1";
 const ROOT = "hui-root";
 const TAG = "origami-header";
 const CARD = "origami-header-card";
@@ -132,6 +132,8 @@ const STYLE = sheet(`
 :host([mode="drawer"]) .handle { position: fixed; top: calc(var(--safe-area-inset-top, 0px) + 4px); left: 50%; transform: translateX(-50%); }
 :host([mode="drawer"][bottom]) .handle { top: auto; bottom: calc(var(--safe-area-inset-bottom, 0px) + 4px); }
 :host([mode="header"]) .handle { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); }
+:host([mode="header"]) .handle::before { background: var(--app-header-text-color, var(--primary-text-color)); opacity: 0.4; }
+:host([mode="header"]) .handle:hover::before { opacity: 1; }
 .grip { display: flex; align-self: center; margin: calc(-1 * var(--ha-space-2, 8px)) 0 calc(-1 * var(--ha-space-4, 16px)); }
 :host([bottom]) .grip { order: -1; margin: calc(-1 * var(--ha-space-4, 16px)) 0 calc(-1 * var(--ha-space-2, 8px)); }
 .scrim { position: fixed; inset: 0; opacity: 0; visibility: hidden; pointer-events: none; touch-action: none;
@@ -248,9 +250,12 @@ class DrawerPanel extends HTMLElement {
     const conf = this._conf;
     const cards = Array.isArray(conf.header) ? conf.header.filter(isObj) : [];
     if (!cards.length) {
+      // Like the default header: the title of the only view, otherwise the dashboard name from the sidebar.
+      const views = this._root?.lovelace?.config?.views;
+      const panel = this._hass?.panels?.[location.pathname.split("/")[1]];
       const title = document.createElement("div");
       title.className = "title";
-      title.textContent = this._root?.lovelace?.config?.title ?? "";
+      title.textContent = (views?.length === 1 && views[0]?.title) || (panel && (this._hass.localize?.(`panel.${panel.title}`) || panel.title)) || "";
       this._barCards.replaceChildren(title);
       return;
     }

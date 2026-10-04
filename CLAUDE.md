@@ -37,6 +37,7 @@ The module depends on these. When an update breaks something, check them first:
 - `hui-card`: removes cards whose element is `hidden`, sets `preview` in edit mode and in the card editor
 - the scoped custom element registry polyfill in the Home Assistant app bundle
 - the events `hass-action`, `hass-toggle-menu`, `ll-custom` and `location-changed`
+- the default header title: the only view's title, otherwise the dashboard name from `hass.panels` and the `panel.<title>` translation
 
 `test/mock/mock-ha.js` reproduces this behavior. Update it together with the module, and check the result on a real Home Assistant instance before a release.
 

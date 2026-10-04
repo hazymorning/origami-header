@@ -9,10 +9,10 @@ const CARD = { type: "custom:origami-header-card", items: ITEMS, cards: [{ type:
 const HEADER = { ...CARD, mode: "header", header: [{ type: "heading" }] };
 const dashboard = (...cards) => ({ title: "My home", views: [{ path: "home", cards }] });
 
-async function start(page, { config = dashboard(CARD), admin = true, query = "" } = {}) {
+async function start(page, { config = dashboard(CARD), admin = true, panelTitle, query = "" } = {}) {
   await page.goto(`/test/mock/index.html?${query}`);
   await page.evaluate(() => window.ready);
-  await page.evaluate((args) => window.boot(args), { config, admin });
+  await page.evaluate((args) => window.boot(args), { config, admin, panelTitle });
   await page.waitForFunction(() => window.firstFrame);
 }
 
@@ -136,9 +136,25 @@ test("header mode shows the header to everyone and the handle only to admins", a
   expect((await drawer(page)).open).toBe(false);
 });
 
-test("header mode without header cards shows the dashboard title", async ({ page }) => {
-  await start(page, { config: dashboard({ type: "custom:origami-header-card", mode: "header", items: [] }) });
-  expect(await drawer(page)).toMatchObject({ barText: "My home", handle: false });
+test("header mode without header cards shows the same title as the default header", async ({ page }) => {
+  const card = { type: "custom:origami-header-card", mode: "header", items: [] };
+  await start(page, { config: dashboard(card) });
+  expect(await drawer(page)).toMatchObject({ barText: "Overview", handle: false });
+
+  await start(page, { config: { views: [{ title: "Living room", cards: [card] }] } });
+  expect((await drawer(page)).barText).toBe("Living room");
+
+  await start(page, { config: { views: [{ title: "Living room", cards: [card] }, { title: "Garden" }] }, panelTitle: "My home" });
+  expect((await drawer(page)).barText).toBe("My home");
+});
+
+test("header mode draws the handle in the header text color", async ({ page }) => {
+  await start(page, { config: dashboard(HEADER) });
+  const color = await page.evaluate(() => {
+    const handle = window.root.querySelector("origami-header").shadowRoot.querySelector(".handle");
+    return getComputedStyle(handle, "::before").backgroundColor;
+  });
+  expect(color).toBe("rgb(255, 255, 255)");
 });
 
 test("header mode opens the drawer over the whole screen", async ({ page }) => {
@@ -240,6 +256,7 @@ test("card is invisible on the dashboard and previews header and drawer in edit 
         hidden: window.host.hasAttribute("hidden"),
         attached: el.parentElement === window.host,
         bar: shown(".bar"),
+        barText: s.querySelector(".bar-cards").textContent,
         sheet: shown(".sheet"),
         note: shown(".note"),
         position: getComputedStyle(s.querySelector(".sheet")).position,
@@ -265,6 +282,11 @@ test("card is invisible on the dashboard and previews header and drawer in edit 
   await preview();
   await expect.poll(async () => (await card()).cards).toEqual(["card:heading", "card:entities"]);
   expect(await card()).toMatchObject({ bar: true, sheet: true });
+
+  await mount({ type: "custom:origami-header-card", mode: "header", items: [] });
+  await expect.poll(async () => (await card())?.hidden).toBe(true);
+  await preview();
+  expect(await card()).toMatchObject({ bar: true, sheet: false, barText: "Overview" });
 
   await mount({ type: "custom:origami-header-card", mode: "hidden" });
   await expect.poll(async () => (await card())?.hidden).toBe(true);
