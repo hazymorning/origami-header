@@ -1,7 +1,7 @@
 // Origami Header: replaces the Home Assistant dashboard header with your own buttons and cards.
 // Configuration and usage: README.md
 
-const VERSION = "0.4.0";
+const VERSION = "0.4.1";
 const ROOT = "hui-root";
 const TAG = "origami-header";
 const CARD = "origami-header-card";
@@ -18,6 +18,7 @@ const STRINGS = {
     tap_action: "Tap behavior", hold_action: "Hold behavior", double_tap_action: "Double tap behavior",
     cards: "Cards", position: "Position", top: "Top", bottom: "Bottom", layout: "Layout", list: "List", grid: "Grid",
     all_users: "Show for all users", all_users_help: "Otherwise only admins see it, and other users get no header.",
+    css: "CSS", css_help: "Classes: .bar for the header, .sheet for the menu and .scrim for its backdrop, .button and .name for buttons. The help icon at the top opens the README with all classes.",
   },
   de: {
     edit: "Bear\u00adbeiten", automations: "Automa\u00adtionen", tools: "Werk\u00adzeuge", sidebar: "Seiten\u00adleiste",
@@ -31,6 +32,7 @@ const STRINGS = {
     tap_action: "Verhalten bei Antippen", hold_action: "Verhalten bei Festhalten", double_tap_action: "Verhalten bei Doppeltippen",
     cards: "Karten", position: "Position", top: "Oben", bottom: "Unten", layout: "Anordnung", list: "Liste", grid: "Raster",
     all_users: "Für alle Benutzer anzeigen", all_users_help: "Sonst nur für Admins. Andere Benutzer sehen dann keine Kopfzeile.",
+    css: "CSS", css_help: "Klassen: .bar für die Kopfzeile, .sheet für das Menü und .scrim für den Hintergrund dahinter, .button und .name für Knöpfe. Das Hilfe-Symbol oben öffnet die README mit allen Klassen.",
   },
 };
 const t = (key) => (STRINGS[document.documentElement.lang.slice(0, 2)] || STRINGS.en)[key] ?? STRINGS.en[key];
@@ -392,9 +394,11 @@ const form = () => ({
       ],
     },
     { name: "all_users", visible: SHOWN, selector: { boolean: {} } },
+    // Home Assistant has no CSS field. The template selector is its code editor for plain text, and default sets the placeholder.
+    { name: "css", visible: SHOWN, default: ".scrim { backdrop-filter: blur(12px); }", selector: { template: { preview: false } } },
   ],
   computeLabel: (schema) => t(schema.name),
-  computeHelper: (schema) => (schema.name === "all_users" ? t("all_users_help") : undefined),
+  computeHelper: (schema) => (["all_users", "css"].includes(schema.name) ? t(`${schema.name}_help`) : undefined),
   assertConfig: (config) => {
     const list = (value) => Array.isArray(value) && value.every(isObj);
     if (config.buttons !== undefined && !list(config.buttons)) throw new Error("buttons must be a list");
@@ -542,6 +546,7 @@ const init = () => {
     name: "Origami Header",
     description: "Your own header or a fold-out menu in place of the dashboard header.",
     preview: false,
+    documentationURL: "https://github.com/hazymorning/origami_header#styling",
   });
 
   addEventListener("keydown", () => (keyboard = true), true);

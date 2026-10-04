@@ -1,6 +1,6 @@
 {
   "name": "origami-header",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Replaces the Home Assistant dashboard header with your own buttons and cards",
   "license": "MIT",
   "private": true,

@@ -512,11 +512,13 @@ test("offers a visual editor and a starter config", async ({ page }) => {
       actions: field("buttons").selector.object.fields.tap_action.selector.ui_action,
       label: form.computeLabel({ name: "mode" }),
       helpers: names.filter((name) => form.computeHelper({ name })),
+      css: field("css"),
+      docs: window.customCards.find((c) => c.type === "origami-header-card").documentationURL,
       rejects: [rejects({ buttons: "x" }), rejects({ cards: "x" }), rejects({ buttons: [], cards: [] }), rejects({ cards: { type: "entities" } }), rejects({ cards: {} })],
       stub: Card.getStubConfig(),
     };
   });
-  expect(editor.names).toEqual(["mode", "buttons", "cards", "", "all_users"]);
+  expect(editor.names).toEqual(["mode", "buttons", "cards", "", "all_users", "css"]);
   expect(editor.mode).toMatchObject({ mode: "box", box_max_columns: 1 });
   expect(editor.mode.options).toEqual([
     { value: "header", label: "Custom header", description: "Your buttons and cards form the header." },
@@ -524,15 +526,18 @@ test("offers a visual editor and a starter config", async ({ page }) => {
     { value: "hidden", label: "No header", description: "Hides the header, for example on wall tablets." },
   ]);
   expect(editor.shown).toEqual({
-    default: ["mode", "buttons", "cards", "all_users"],
-    menu: ["mode", "buttons", "cards", "", "all_users"],
-    header: ["mode", "buttons", "cards", "all_users"],
+    default: ["mode", "buttons", "cards", "all_users", "css"],
+    menu: ["mode", "buttons", "cards", "", "all_users", "css"],
+    header: ["mode", "buttons", "cards", "all_users", "css"],
     hidden: ["mode"],
   });
   expect(editor.fields).toEqual(["name", "icon", "color", "special", "tap_action", "hold_action", "double_tap_action"]);
   expect(editor.actions).toEqual({ actions: ["navigate", "url", "perform-action", "assist", "none"], default_action: "none" });
   expect(editor.label).toBe("Header");
-  expect(editor.helpers).toEqual(["all_users"]);
+  expect(editor.helpers).toEqual(["all_users", "css"]);
+  // CSS gets the same code editor as the cards field, with an example instead of the template placeholder.
+  expect(editor.css).toMatchObject({ selector: { template: { preview: false } }, default: ".scrim { backdrop-filter: blur(12px); }" });
+  expect(editor.docs).toBe("https://github.com/hazymorning/origami_header#styling");
   expect(editor.rejects).toEqual([true, true, false, false, false]);
   expect(editor.stub.mode).toBe("header");
   expect(editor.stub.buttons.map((b) => b.special || b.tap_action.navigation_path)).toEqual(["edit", "/config/automation/dashboard", "/config/tools", "sidebar"]);

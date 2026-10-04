@@ -17,7 +17,7 @@ frontend:
 <details>
 <summary>Manual installation</summary>
 
-Download `origami-header.js` from the [latest release](https://github.com/hazymorning/origami_header/releases/latest) into `config/www` and use `/local/origami-header.js?v=0.4.0` as the extra module URL. Change the version after each update so browsers load the new file.
+Download `origami-header.js` from the [latest release](https://github.com/hazymorning/origami_header/releases/latest) into `config/www` and use `/local/origami-header.js?v=0.4.1` as the extra module URL. Change the version after each update so browsers load the new file.
 
 </details>
 
@@ -91,10 +91,11 @@ To close the menu, tap outside, press Escape or swipe it back toward its edge. T
 | `position` | `top` | Edge the menu opens from, `top` or `bottom` |
 | `layout` | `list` | Buttons in the menu, `list` with two columns or `grid` with four |
 | `all_users` | `false` | Show it to all users, not only admins |
-| `css` | | Custom styles, set in the code editor |
+| `css` | | Custom styles, see below |
 
 </details>
 
+<a name="styling"></a>
 <details>
 <summary>Styling</summary>
 
