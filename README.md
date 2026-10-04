@@ -1,4 +1,4 @@
-# Origami Header
+# ◪ Origami Header
 
 Origami Header replaces the Home Assistant dashboard header with your own cards, a pull-down drawer, or both. Unlike hiding the header with kiosk-mode or a theme, nothing flashes while the dashboard loads, and edit mode and the sidebar stay within reach.
 
