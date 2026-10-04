@@ -1,6 +1,6 @@
 # Origami Header
 
-Replaces the Home Assistant dashboard header with your own buttons and cards, as a fold-out menu or as a custom header. The default header never flashes while the dashboard loads, and edit mode and the sidebar stay within reach.
+Replaces the Home Assistant dashboard header with your own buttons and cards, as a custom header or as a fold-out menu. The default header never flashes while the dashboard loads, and edit mode and the sidebar stay within reach.
 
 ![Fold-out menu and custom header](https://raw.githubusercontent.com/hazymorning/origami_header/main/.github/screenshot.png)
 
@@ -17,7 +17,7 @@ frontend:
 <details>
 <summary>Manual installation</summary>
 
-Download `origami-header.js` from the [latest release](https://github.com/hazymorning/origami_header/releases/latest) into `config/www` and use `/local/origami-header.js?v=0.3.1` as the extra module URL. Change the version after each update so browsers load the new file.
+Download `origami-header.js` from the [latest release](https://github.com/hazymorning/origami_header/releases/latest) into `config/www` and use `/local/origami-header.js?v=0.4.0` as the extra module URL. Change the version after each update so browsers load the new file.
 
 </details>
 
@@ -27,14 +27,14 @@ Add the Origami Header card to any view and choose what happens to the header. T
 
 | `mode` | Result |
 | --- | --- |
-| `menu` (default) | Fold-out menu. A handle at the edge of the screen opens your buttons and cards. |
-| `header` | Custom header. Your cards and buttons form the header. |
+| `header` (default) | Custom header. Your cards and buttons form the header. |
+| `menu` | Fold-out menu. The header is hidden, and another card opens your buttons and cards. |
 | `hidden` | No header. |
 
 <details>
 <summary>Buttons and cards</summary>
 
-Buttons work like the button badges of a heading card. They look like tiles in the menu and like badges in the header.
+Buttons work like the button badges of a heading card. They look like badges in the header and like small cards in the menu.
 
 | Option | Description |
 | --- | --- |
@@ -68,15 +68,15 @@ The [examples](examples) folder has a complete header and menu.
 <details>
 <summary>Opening the menu</summary>
 
-Tap the handle or pull it. To close the menu, tap outside, press Escape or swipe it back toward its edge.
-
-Other cards can use a `fire-dom-event` action with `origami_header` set to `open`, `close`, `toggle`, `edit` or `sidebar`:
+Give another card, such as a button card or a tile, a `fire-dom-event` action with `origami_header` set to `open` or `toggle`:
 
 ```yaml
 tap_action:
   action: fire-dom-event
   origami_header: toggle
 ```
+
+To close the menu, tap outside, press Escape or swipe it back toward its edge. The same action also takes `close`, `edit` and `sidebar`. If no card opens the menu, add `?edit=1` to the dashboard URL to get to edit mode.
 
 </details>
 
@@ -85,14 +85,13 @@ tap_action:
 
 | Option | Default | Description |
 | --- | --- | --- |
-| `mode` | `menu` | `menu`, `header` or `hidden` |
+| `mode` | `header` | `header`, `menu` or `hidden` |
 | `buttons` | Edit, Automations, Tools, Sidebar | List of buttons |
 | `cards` | | A card or a list of cards |
 | `position` | `top` | Edge the menu opens from, `top` or `bottom` |
 | `layout` | `list` | Buttons in the menu, `list` with two columns or `grid` with four |
-| `hide_handle` | `false` | Hide the handle when another card opens the menu |
 | `all_users` | `false` | Show it to all users, not only admins |
-| `css` | | Custom styles |
+| `css` | | Custom styles, set in the code editor |
 
 </details>
 
@@ -104,7 +103,7 @@ Buttons use the theme variables of tiles and badges, such as `--ha-card-backgrou
 | Class | Part |
 | --- | --- |
 | `.bar` | Header |
-| `.handle`, `.scrim`, `.sheet` | Handle, backdrop and menu |
+| `.scrim`, `.sheet` | Backdrop and menu |
 | `.cards`, `.buttons` | Cards, buttons |
 | `.button`, `.button ha-icon`, `.name` | Button, icon, name |
 
