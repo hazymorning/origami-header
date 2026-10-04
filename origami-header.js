@@ -160,7 +160,7 @@ const STYLE = sheet(`
 .bar { position: relative; }
 :host([mode="header"]) .bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ha-space-2, 8px); box-sizing: border-box; min-height: 56px;
   padding: var(--ha-space-2, 8px) var(--ha-space-4, 16px); border-bottom: var(--app-header-border-bottom, none); pointer-events: auto; }
-:host([mode="header"]) .cards { flex: 1 1 auto; min-width: 0; }
+:host([mode="header"]) .cards { flex: 1 1 12rem; min-width: 0; }
 :host([mode="header"]) .buttons { display: flex; flex-wrap: wrap; justify-content: flex-end; margin-inline-start: auto; }
 .note { display: none; }
 .handle { display: none; position: fixed; top: calc(var(--safe-area-inset-top, 0px) + 4px); left: 50%; transform: translateX(-50%); align-items: center; justify-content: center;
@@ -216,7 +216,7 @@ const PREVIEW = sheet(`
 .bar { background: var(--app-header-background-color, var(--primary-background-color)); border-radius: var(--ha-card-border-radius, 12px); }
 :host([mode="hidden"]) .note { display: block; padding: var(--ha-space-3, 12px); color: var(--secondary-text-color); text-align: center; }
 .sheet { position: relative !important; inset: auto !important; transform: none !important; visibility: visible !important; transition: none !important;
-  width: auto !important; max-width: none !important; max-height: none !important; margin: 0 !important; overflow: visible !important; }
+  width: auto !important; max-width: none !important; max-height: none !important; margin: 0 !important; overflow: visible !important; border-radius: ${RADIUS} !important; }
 `);
 
 class Panel extends HTMLElement {

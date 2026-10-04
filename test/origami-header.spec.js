@@ -195,14 +195,16 @@ test("takes a single card as the card editor copies it, without a leading dash",
   await expect.poll(async () => (await drawer(page))?.barCards).toEqual(["card:entities"]);
 });
 
-test("header mode puts the cards first and the buttons as badges at the end of the row, and has no menu", async ({ page }) => {
-  await start(page, { config: dashboard(HEADER) });
+test("header mode puts the cards and the buttons as badges in one row, and has no menu", async ({ page }) => {
+  const icons = BUTTONS.map(({ name, ...button }) => button);
+  await start(page, { config: dashboard({ ...HEADER, buttons: icons }) });
   await expect.poll(async () => (await drawer(page)).barCards).toEqual(["card:entities"]);
   const { bar, cards, buttons: row } = await drawer(page);
-  expect(cards[0]).toBeLessThan(row[0]);
+  expect(cards[0]).toBe(bar[0] + 16);
+  expect(cards[0] + cards[2] + 8).toBe(row[0]);
   expect(row[0] + row[2]).toBe(bar[0] + bar[2] - 16);
   expect(Math.abs(cards[1] + cards[3] / 2 - (row[1] + row[3] / 2))).toBeLessThanOrEqual(1);
-  expect((await buttons(page)).map((b) => b.rect[3])).toEqual([36, 36, 36]);
+  expect((await buttons(page)).map((b) => b.rect.slice(2))).toEqual([[36, 36], [36, 36], [36, 36]]);
   await command(page, "open");
   expect((await drawer(page)).open).toBe(false);
 });
