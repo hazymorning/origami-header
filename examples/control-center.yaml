@@ -1,5 +1,5 @@
 type: custom:origami-header-card
-items:
+buttons:
   - label: Edit
     icon: mdi:pencil-outline
     special: edit
