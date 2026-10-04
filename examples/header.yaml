@@ -1,6 +1,6 @@
 type: custom:origami-header-card
 mode: header
-header:
+cards:
   - type: custom:paper-buttons-row
     extra_styles: >-
       div.flex-box { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "title settings power" "stats settings power"; column-gap: 8px; row-gap: 14px; align-items: center }
@@ -104,7 +104,7 @@ header:
             <<: *round
             grid-area: power
           icon: *round-icon
-items:
+buttons:
   - label: Edit
     icon: mdi:pencil-outline
     special: edit
@@ -122,27 +122,6 @@ items:
     icon: mdi:menu
     special: sidebar
 css: |
-  .scrim {
-    -webkit-backdrop-filter: blur(14px);
-    backdrop-filter: blur(14px);
-    background: color-mix(in srgb, var(--primary-background-color) 28%, transparent);
-  }
-  .sheet {
-    inset: calc(10px + var(--safe-area-inset-top, 0px)) 10px auto;
-    width: auto;
-    max-width: 540px;
-    padding: 26px 20px 14px;
-    gap: 32px;
-    border: 1px solid color-mix(in srgb, var(--ha-card-background, var(--card-background-color)) 70%, transparent);
-    border-radius: 34px;
-    background: color-mix(in srgb, var(--primary-background-color) 80%, transparent);
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.16), 0 2px 8px rgba(0, 0, 0, 0.06);
-    -webkit-backdrop-filter: blur(28px) saturate(1.4);
-    backdrop-filter: blur(28px) saturate(1.4);
-    transform: translateY(calc(-100% - 20px));
-  }
-  .grip { margin: -18px 0 -8px; }
-  .grid { grid-template-columns: repeat(4, 56px); justify-content: space-between; gap: 0; }
   .tile { flex-direction: column; gap: 8px; min-height: 0; padding: 0; border-radius: 18px; background: none; font-size: 12px; font-weight: 600; }
   .tile ha-icon {
     display: flex;
