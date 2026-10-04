@@ -9,7 +9,7 @@ Add this repository to HACS as a custom repository of type Dashboard and downloa
 ```yaml
 frontend:
   extra_module_url:
-    - /hacsfiles/origami-header/origami-header.js
+    - /hacsfiles/origami_header/origami-header.js
 ```
 
 <details>
